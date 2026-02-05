@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Webserver (Nginx)
+  webserver:
+    image: nginx:latest
+    container_name: school-plan-webserver
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    depends_on:
+      - app
+    networks:
+      - school-plan-network
+    restart: unless-stopped
+
+  # Node.js Application (Backend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school-plan-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    networks:
+      - school-plan-network
+    restart: unless-stopped
+
+  # Database (Optional - PostgreSQL)
+  database:
+    image: postgres:15-alpine
+    container_name: school-plan-db
+    environment:
+      POSTGRES_USER: schoolplan_user
+      POSTGRES_PASSWORD: secure_password_123
+      POSTGRES_DB: schoolplan_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - school-plan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U schoolplan_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  school-plan-network:
+    driver: bridge

@@ -26,9 +26,9 @@ header {
     align-items: center;
     padding: 10px 20px;
     height: 60px;
-    background-color: var(--bg-white);
-    color: var(--text-dark); 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #FF6B6B, #FF8E72);
+    color: white; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     position: relative;
     z-index: 150; /* Stellt sicher, dass der Header über dem Menü liegt */
 }
@@ -38,7 +38,7 @@ header {
     font-weight: bold;
     cursor: pointer;
     margin-right: 15px;
-    color: var(--text-dark);
+    color: white;
     z-index: 160; 
 }
 
@@ -47,12 +47,15 @@ header h1 {
     margin: 0;
     font-size: 1.5em;
     font-weight: 500;
+    color: white;
 }
 
 .highlight {
-    background-color: #ffe066;
-    padding: 2px 6px;
-    border-radius: 6px;
+    background-color: #FFD700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #333;
+    font-weight: bold;
 }
 
 /* --- Klassenauswahl & Tabs --- */
@@ -403,20 +406,6 @@ header h1 {
     z-index: 9999;
 }
 
-/*.spinner {
-    border: 8px solid rgba(255, 255, 255, 0.3);
-    border-top: 8px solid #fff;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}*/
 
 .main-content-fade {
     opacity: 0; 
