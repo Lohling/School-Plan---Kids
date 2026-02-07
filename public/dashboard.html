@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Plan - Dashboard</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+    
+    <!-- ===== STUDENT DASHBOARD ===== -->
+    <div id="schueler-view" class="dashboard-view hidden">
+        <div id="main-content">
+            <header class="header">
+                <div class="menu-icon">☰</div>
+                <h1>School Plan - <span class="highlight">Kids</span></h1>
+                <div class="user-profile">
+                    <span class="user-name" id="schueler-name"></span>
+                    <button id="logout-btn-schueler" class="logout-btn">Logout</button>
+                </div>
+            </header>
+
+            <div id="side-menu" class="side-menu">
+                <button id="submit-sick-note-button" class="menu-item">
+                    Krankschreibung einreichen
+                </button>
+                <button class="menu-item" id="my-schedule-btn">Mein Stundenplan</button>
+                <button class="menu-item" id="news-btn">Neuigkeiten</button>
+            </div>
+
+            <div class="main-container">
+                <div class="class-selector">
+                    <select id="class-dropdown" class="dropdown-menu">
+                        <option value="2a">Klasse 2a</option>
+                        <option value="3b">Klasse 3b</option>
+                        <option value="3c">Klasse 3c</option>
+                        <option value="4c">Klasse 4c</option>
+                    </select>
+                </div>
+
+                <div class="day-tabs">
+                    <button class="tab-button active" data-day="Mo">Mo</button>
+                    <button class="tab-button" data-day="Di">Di</button>
+                    <button class="tab-button" data-day="Mi">Mi</button>
+                    <button class="tab-button" data-day="Do">Do</button>
+                    <button class="tab-button" data-day="Fr">Fr</button>
+                </div>
+
+                <div id="timetable-view" class="timetable-view"></div>
+            </div>
+        </div>
+
+        <div id="news-handle" class="news-handle">
+            <span class="handle-icon">🔔</span> Wichtige Mitteilung (Klicken)
+        </div>
+
+        <div id="news-modal" class="news-modal hidden">
+            <div class="modal-content">
+                <button class="close-button" id="close-news">X</button>
+                <h2 class="achtung-header">Achtung!</h2>
+                <p class="news-text">
+                    Alle Schüler versammeln sich in der kleinen Pause in der Kantine zu einer Schulbesprechung.
+                </p>
+                <p class="news-signature">LG die Schulleitung</p>
+            </div>
+        </div>
+
+        <div id="sick-note-modal" class="app-modal hidden">
+            <div class="modal-content sick-note-content">
+                <button class="close-button" id="close-sick-note">X</button>
+                <h2 class="achtung-header">Krankschreibung einreichen</h2>
+                
+                <form id="sick-note-form">
+                    <label for="child-name">Name des Kindes:</label>
+                    <input type="text" id="child-name" required>
+
+                    <label for="start-date">Fehltag ab:</label>
+                    <input type="date" id="start-date" required>
+
+                    <label for="end-date">Fehltag bis (inkl.):</label>
+                    <input type="date" id="end-date" required>
+
+                    <label for="attestation-file">Ärztliches Attest hochladen (PDF/JPG):</label>
+                    <input type="file" id="attestation-file" accept=".pdf,.jpg,.jpeg,.png"> 
+        
+                    <button type="submit" class="submit-button">Absenden</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TEACHER DASHBOARD ===== -->
+    <div id="lehrer-view" class="dashboard-view hidden">
+        <div class="teacher-dashboard">
+            <header class="header">
+                <div class="menu-icon">☰</div>
+                <h1>School Plan - <span class="highlight">Lehrer</span></h1>
+                <div class="user-profile">
+                    <span class="user-name" id="lehrer-name"></span>
+                    <button id="logout-btn-lehrer" class="logout-btn">Logout</button>
+                </div>
+            </header>
+
+            <div id="teacher-side-menu" class="side-menu">
+                <button class="menu-item" id="create-substitution-btn">
+                    Vertretung eintragen
+                </button>
+                <button class="menu-item" id="view-schedule-btn">
+                    Stundenplan anzeigen
+                </button>
+                <button class="menu-item" id="send-message-btn">
+                    Mitteilung versenden
+                </button>
+            </div>
+
+            <div class="main-container">
+                <h2>Ihre Klassen</h2>
+                <div id="teacher-classes" class="classes-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PARENTS DASHBOARD ===== -->
+    <div id="eltern-view" class="dashboard-view hidden">
+        <div class="parents-dashboard">
+            <header class="header">
+                <div class="menu-icon">☰</div>
+                <h1>School Plan - <span class="highlight">Eltern</span></h1>
+                <div class="user-profile">
+                    <span class="user-name" id="eltern-name"></span>
+                    <button id="logout-btn-eltern" class="logout-btn">Logout</button>
+                </div>
+            </header>
+
+            <div id="parent-side-menu" class="side-menu">
+                <button class="menu-item" id="submit-sick-note-parent-btn">
+                    Krankschreibung einreichen
+                </button>
+                <button class="menu-item" id="view-absences-btn">
+                    Fehlzeiten anzeigen
+                </button>
+                <button class="menu-item" id="read-news-parent-btn">
+                    Mitteilungen
+                </button>
+            </div>
+
+            <div class="main-container">
+                <h2>Stundenplan Ihrer Kinder</h2>
+                <div id="children-schedules" class="children-schedules"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN DASHBOARD ===== -->
+    <div id="admin-view" class="dashboard-view hidden">
+        <div class="admin-dashboard">
+            <header class="header">
+                <div class="menu-icon">☰</div>
+                <h1>School Plan - <span class="highlight">Admin</span></h1>
+                <div class="user-profile">
+                    <span class="user-name" id="admin-name"></span>
+                    <button id="logout-btn-admin" class="logout-btn">Logout</button>
+                </div>
+            </header>
+
+            <div id="admin-side-menu" class="side-menu">
+                <button class="menu-item" id="manage-users-btn">
+                    Benutzer verwalten
+                </button>
+                <button class="menu-item" id="manage-classes-btn">
+                    Klassen verwalten
+                </button>
+                <button class="menu-item" id="manage-schedule-btn">
+                    Stundenplan verwalten
+                </button>
+                <button class="menu-item" id="view-logs-btn">
+                    System-Logs anzeigen
+                </button>
+            </div>
+
+            <div class="main-container">
+                <h2>Admin Panel</h2>
+                <div id="admin-content" class="admin-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

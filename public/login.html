@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Plan - Anmeldung</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/login.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>School Plan <span class="highlight">Kids</span></h1>
+                <p class="login-subtitle">Digitaler Vertretungsplan</p>
+            </div>
+
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="username">Benutzername:</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="z.B. maxmustermann"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Passwort:</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="usertype">Benutzertyp:</label>
+                    <select id="usertype" name="usertype" required>
+                        <option value="">-- Bitte wählen --</option>
+                        <option value="schueler">Schüler</option>
+                        <option value="eltern">Eltern</option>
+                        <option value="lehrer">Lehrer</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="login-button">Anmelden</button>
+            </form>
+
+            <div id="error-message" class="error-message hidden"></div>
+
+            <div class="login-info">
+                <h3>Testzugänge:</h3>
+                <div class="info-box">
+                    <p><strong>Schüler:</strong> schueler1 / password123</p>
+                    <p><strong>Eltern:</strong> eltern1 / password123</p>
+                    <p><strong>Lehrer:</strong> lehrer1 / password123</p>
+                    <p><strong>Admin:</strong> admin / admin123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/login.js"></script>
+</body>
+</html>
