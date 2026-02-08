@@ -210,10 +210,34 @@ const App = {
                         <span class="role-badge teacher">👨‍🏫 Lehrer</span>
                         <span class="role-badge admin">⚙️ Admin</span>
                     </div>
+
+                    <div class="test-login-section">
+                        <p class="test-login-label">🧪 Schnell-Login (Test)</p>
+                        <div class="test-login-buttons">
+                            <button class="test-login-btn student" onclick="App.fillTestLogin('leon.klein@schule.de', 'test1234')">
+                                🦊 Leon (Schüler)
+                            </button>
+                            <button class="test-login-btn parent" onclick="App.fillTestLogin('peter.klein@eltern.de', 'test1234')">
+                                👨‍💼 Peter (Eltern)
+                            </button>
+                            <button class="test-login-btn teacher" onclick="App.fillTestLogin('mueller@schule.de', 'test1234')">
+                                👩‍🏫 Fr. Müller (Lehrer)
+                            </button>
+                            <button class="test-login-btn admin" onclick="App.fillTestLogin('admin@schule.de', 'test1234')">
+                                ⚙️ Admin
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
         this.render(content, false);
+    },
+
+    fillTestLogin(email, password) {
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = password;
+        document.getElementById('login-error').classList.add('hidden');
     },
 
     async handleLogin(event) {

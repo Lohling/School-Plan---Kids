@@ -478,6 +478,74 @@ input, select, textarea {
 .role-badge.teacher { background-color: #f3e5f5; color: var(--color-teacher); }
 .role-badge.admin { background-color: #fff3e0; color: var(--color-admin); }
 
+/* Test Login Buttons */
+.test-login-section {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 2px dashed #e0e0e0;
+}
+
+.test-login-label {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: #999;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.test-login-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.test-login-btn {
+    border: 2px solid transparent;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.test-login-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.test-login-btn:active {
+    transform: scale(0.97);
+}
+
+.test-login-btn.student {
+    background-color: #e8f5e9;
+    color: var(--color-student);
+    border-color: #c8e6c9;
+}
+
+.test-login-btn.parent {
+    background-color: #e3f2fd;
+    color: var(--color-parent);
+    border-color: #bbdefb;
+}
+
+.test-login-btn.teacher {
+    background-color: #f3e5f5;
+    color: var(--color-teacher);
+    border-color: #e1bee7;
+}
+
+.test-login-btn.admin {
+    background-color: #fff3e0;
+    color: var(--color-admin);
+    border-color: #ffe0b2;
+}
+
 /* =====================================================
    MAIN CONTENT
    ===================================================== */
