@@ -9,7 +9,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_123}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ./backend/database/seed2.sql:/docker-entrypoint-initdb.d/03-seed2.sql
     ports:
       - "5432:5432"
     networks:

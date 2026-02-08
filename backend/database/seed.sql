@@ -281,8 +281,8 @@ BEGIN
     (uuid_generate_v4(), v_class_2a, v_teacher_schmidt, v_sub_deutsch, v_room_103, 'Mi', 1, '08:00', '08:45', 'lesson'),
     (uuid_generate_v4(), v_class_2a, v_teacher_schmidt, v_sub_mathe, v_room_103, 'Mi', 2, '08:50', '09:35', 'lesson'),
     (uuid_generate_v4(), v_class_2a, NULL, NULL, NULL, 'Mi', 0, '09:35', '09:55', 'break'),
-    (v_tt_4, v_class_2a, v_teacher_mueller, v_sub_hsu, v_room_103, 'Mi', 3, '09:55', '10:40', 'lesson'),
-    (uuid_generate_v4(), v_class_2a, v_teacher_mueller, v_sub_hsu, v_room_103, 'Mi', 4, '10:45', '11:30', 'lesson'),
+    (v_tt_4, v_class_2a, v_teacher_schmidt, v_sub_hsu, v_room_103, 'Mi', 3, '09:55', '10:40', 'lesson'),
+    (uuid_generate_v4(), v_class_2a, v_teacher_schmidt, v_sub_hsu, v_room_103, 'Mi', 4, '10:45', '11:30', 'lesson'),
     -- === DONNERSTAG ===
     (uuid_generate_v4(), v_class_2a, v_teacher_schmidt, v_sub_deutsch, v_room_103, 'Do', 1, '08:00', '08:45', 'lesson'),
     (uuid_generate_v4(), v_class_2a, v_teacher_schmidt, v_sub_mathe, v_room_103, 'Do', 2, '08:50', '09:35', 'lesson'),
@@ -293,7 +293,7 @@ BEGIN
     (uuid_generate_v4(), v_class_2a, v_teacher_schmidt, v_sub_deutsch, v_room_103, 'Fr', 1, '08:00', '08:45', 'lesson'),
     (uuid_generate_v4(), v_class_2a, v_teacher_weber, v_sub_mathe, v_room_103, 'Fr', 2, '08:50', '09:35', 'lesson'),
     (uuid_generate_v4(), v_class_2a, NULL, NULL, NULL, 'Fr', 0, '09:35', '09:55', 'break'),
-    (uuid_generate_v4(), v_class_2a, v_teacher_mueller, v_sub_religion, v_room_103, 'Fr', 3, '09:55', '10:40', 'lesson'),
+    (uuid_generate_v4(), v_class_2a, v_teacher_weber, v_sub_religion, v_room_103, 'Fr', 3, '09:55', '10:40', 'lesson'),
     (uuid_generate_v4(), v_class_2a, v_teacher_braun, v_sub_musik, v_room_musikraum, 'Fr', 4, '10:45', '11:30', 'lesson');
 
     -- =====================================================
@@ -360,13 +360,13 @@ BEGIN
     (v_class_4a, v_teacher_schmidt, v_sub_deutsch, v_room_107, 'Do', 2, '08:50', '09:35', 'lesson'),
     (v_class_4a, NULL, NULL, NULL, 'Do', 0, '09:35', '09:55', 'break'),
     (v_class_4a, v_teacher_mueller, v_sub_englisch, v_room_107, 'Do', 3, '09:55', '10:40', 'lesson'),
-    (v_class_4a, v_teacher_mueller, v_sub_religion, v_room_107, 'Do', 4, '10:45', '11:30', 'lesson'),
+    (v_class_4a, v_teacher_schmidt, v_sub_religion, v_room_107, 'Do', 4, '10:45', '11:30', 'lesson'),
     -- Freitag
     (v_class_4a, v_teacher_schmidt, v_sub_deutsch, v_room_107, 'Fr', 1, '08:00', '08:45', 'lesson'),
     (v_class_4a, v_teacher_schmidt, v_sub_mathe, v_room_107, 'Fr', 2, '08:50', '09:35', 'lesson'),
     (v_class_4a, NULL, NULL, NULL, 'Fr', 0, '09:35', '09:55', 'break'),
-    (v_class_4a, v_teacher_mueller, v_sub_werken, v_room_werkraum, 'Fr', 3, '09:55', '10:40', 'lesson'),
-    (v_class_4a, v_teacher_mueller, v_sub_werken, v_room_werkraum, 'Fr', 4, '10:45', '11:30', 'lesson');
+    (v_class_4a, v_teacher_schmidt, v_sub_werken, v_room_werkraum, 'Fr', 3, '09:55', '10:40', 'lesson'),
+    (v_class_4a, v_teacher_schmidt, v_sub_werken, v_room_werkraum, 'Fr', 4, '10:45', '11:30', 'lesson');
 
     -- =====================================================
     -- VERTRETUNGEN (nächste Tage)
@@ -385,7 +385,7 @@ BEGIN
     INSERT INTO lesson_contents (timetable_entry_id, date, topic, description, homework, materials, created_by) VALUES
     (v_tt_1, CURRENT_DATE - INTERVAL '1 day', 'Buchstabe Sch', 'Wir haben den Buchstaben "Sch" gelernt und Wörter gesucht', 'Arbeitsblatt S.15 fertig machen', 'Lesebuch, Schreibheft', v_teacher_schmidt),
     (v_tt_3, CURRENT_DATE - INTERVAL '2 days', 'Einmaleins mit 3', 'Wir üben die 3er-Reihe', '3er-Reihe 5x aufschreiben', 'Matheheft, Buntstifte', v_teacher_schmidt),
-    (v_tt_4, CURRENT_DATE - INTERVAL '3 days', 'Der Igel', 'Wir haben über den Igel im Winter gelernt', 'Igel-Bild ausmalen', 'HSU-Ordner', v_teacher_mueller),
+    (v_tt_4, CURRENT_DATE - INTERVAL '3 days', 'Der Igel', 'Wir haben über den Igel im Winter gelernt', 'Igel-Bild ausmalen', 'HSU-Ordner', v_teacher_schmidt),
     (v_tt_5, CURRENT_DATE - INTERVAL '1 day', 'Herbstbild', 'Wir malen ein Herbstbild mit Wasserfarben', NULL, 'Wasserfarben, Pinsel, Malkittel', v_teacher_braun),
     (v_tt_1, CURRENT_DATE, 'Leseübung: Der kleine Bär', 'Gemeinsames Lesen und Nacherzählen', 'Geschichte zu Ende lesen', 'Lesebuch S.22-24', v_teacher_schmidt);
 
