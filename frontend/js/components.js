@@ -231,7 +231,7 @@ const Components = {
                     <div class="news-title">${item.title}</div>
                     <div class="news-date">${date}</div>
                 </div>
-                <div class="news-content">${item.content}</div>
+                <div class="news-content">${(item.content || '').replace(/\\n/g, '<br>')}</div>
                 ${item.event_date ? `
                     <div class="news-event">
                         <span>📆</span>
