@@ -98,6 +98,10 @@ const App = {
             requiresAuth: true, 
             roles: ['admin'] 
         });
+        Router.register('/admin/timetable/:classId', (params) => this.renderAdminTimetableEdit(params.classId), { 
+            requiresAuth: true, 
+            roles: ['admin'] 
+        });
         Router.register('/admin/sick-notes', () => this.renderAdminSickNotes(), { 
             requiresAuth: true, 
             roles: ['admin'] 
@@ -1030,6 +1034,249 @@ const App = {
             <h1 class="page-title"><span class="icon">📅</span> Stundenpläne verwalten</h1>
             ${content}
         `);
+    },
+
+    // Timetable Editor State
+    timetableEditData: { entries: [], subjects: [], rooms: [], teachers: [], classId: null, className: '' },
+
+    async renderAdminTimetableEdit(classId) {
+        const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+        const WEEKDAY_NAMES = { Mo: 'Montag', Di: 'Dienstag', Mi: 'Mittwoch', Do: 'Donnerstag', Fr: 'Freitag' };
+        const LESSON_TIMES = [
+            { nr: 1, start: '08:00', end: '08:45' },
+            { nr: 2, start: '08:50', end: '09:35' },
+            { nr: 3, start: '09:55', end: '10:40' },
+            { nr: 4, start: '10:45', end: '11:30' },
+            { nr: 5, start: '11:35', end: '12:20' },
+            { nr: 6, start: '12:25', end: '13:10' },
+        ];
+
+        let content = '';
+        try {
+            const [timetableRes, subjectsRes, roomsRes, teachersRes, classesRes] = await Promise.all([
+                API.timetable.getForClass(classId),
+                API.admin.getSubjects(),
+                API.admin.getRooms(),
+                API.admin.getUsers('teacher'),
+                API.classes.getAll()
+            ]);
+
+            const cls = (classesRes.classes || []).find(c => c.id === classId);
+            const className = cls ? cls.name : 'Klasse';
+            const timetable = timetableRes.timetable || {};
+            const subjects = subjectsRes.subjects || [];
+            const rooms = roomsRes.rooms || [];
+            const teachers = (teachersRes.users || []).filter(u => u.role === 'teacher');
+
+            // Store for later use
+            this.timetableEditData = { entries: timetable, subjects, rooms, teachers, classId, className };
+
+            const subjectOptions = subjects.map(s => `<option value="${s.id}">${s.icon || ''} ${s.name}</option>`).join('');
+            const roomOptions = rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            const teacherOptions = teachers.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+
+            // Build grid
+            let gridHTML = `<div class="tt-edit-grid">`;
+            // Header row
+            gridHTML += `<div class="tt-edit-header-cell">Std.</div>`;
+            WEEKDAYS.forEach(d => {
+                gridHTML += `<div class="tt-edit-header-cell">${WEEKDAY_NAMES[d]}</div>`;
+            });
+
+            LESSON_TIMES.forEach(lesson => {
+                // Time cell
+                gridHTML += `<div class="tt-edit-time-cell">
+                    <strong>${lesson.nr}.</strong><br>
+                    <small>${lesson.start}<br>${lesson.end}</small>
+                </div>`;
+
+                WEEKDAYS.forEach(day => {
+                    const entries = (timetable[day] || []).filter(e => e.lessonNumber === lesson.nr && e.type !== 'break');
+                    const entry = entries[0];
+
+                    if (entry) {
+                        gridHTML += `
+                            <div class="tt-edit-cell filled" onclick="App.editTimetableEntry('${entry.id}', '${day}', ${lesson.nr})">
+                                <div class="tt-cell-subject">${entry.icon || ''} ${entry.shortName || entry.subject || ''}</div>
+                                <div class="tt-cell-detail">${entry.teacher ? entry.teacher.split(' ').pop() : ''}</div>
+                                <div class="tt-cell-detail">${entry.room || ''}</div>
+                            </div>
+                        `;
+                    } else {
+                        gridHTML += `
+                            <div class="tt-edit-cell empty" onclick="App.addTimetableEntry('${day}', ${lesson.nr}, '${lesson.start}', '${lesson.end}')">
+                                <span class="tt-cell-add">＋</span>
+                            </div>
+                        `;
+                    }
+                });
+            });
+            gridHTML += `</div>`;
+
+            content = `
+                <div class="flex" style="justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <h1 class="page-title" style="margin:0;"><span class="icon">📅</span> Stundenplan ${className}</h1>
+                    <a href="#/admin/timetable" class="btn btn-secondary">← Zurück</a>
+                </div>
+                <p class="text-muted mt-sm mb-lg">Klicke auf eine Zelle um eine Stunde hinzuzufügen oder zu bearbeiten.</p>
+                ${gridHTML}
+            `;
+
+            // Modal for editing
+            content += `
+                <div class="modal-overlay" id="tt-modal-overlay">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h2 id="tt-modal-title">Stunde bearbeiten</h2>
+                            <button class="modal-close" onclick="App.closeTTModal()">✕</button>
+                        </div>
+                        <form id="tt-entry-form" onsubmit="App.saveTimetableEntry(event)">
+                            <input type="hidden" id="tt-entry-id">
+                            <input type="hidden" id="tt-entry-day">
+                            <input type="hidden" id="tt-entry-lesson">
+                            <div class="form-group">
+                                <label class="form-label">📚 Fach</label>
+                                <select id="tt-subject" class="form-input" required>
+                                    <option value="">-- Fach wählen --</option>
+                                    ${subjectOptions}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">👨‍🏫 Lehrer</label>
+                                <select id="tt-teacher" class="form-input">
+                                    <option value="">-- Lehrer wählen --</option>
+                                    ${teacherOptions}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🚪 Raum</label>
+                                <select id="tt-room" class="form-input">
+                                    <option value="">-- Raum wählen --</option>
+                                    ${roomOptions}
+                                </select>
+                            </div>
+                            <div class="flex gap-sm" style="flex-wrap:wrap;">
+                                <div class="form-group" style="flex:1;">
+                                    <label class="form-label">⏰ Von</label>
+                                    <input type="time" id="tt-start" class="form-input" required>
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label class="form-label">⏰ Bis</label>
+                                    <input type="time" id="tt-end" class="form-input" required>
+                                </div>
+                            </div>
+                            <div class="flex gap-sm mt-md">
+                                <button type="submit" class="btn btn-primary" style="flex:1;">💾 Speichern</button>
+                                <button type="button" class="btn btn-secondary" onclick="App.closeTTModal()" style="flex:1;">Abbrechen</button>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-block mt-md" id="tt-delete-btn" style="display:none;" onclick="App.deleteTimetableEntry()">
+                                🗑️ Stunde löschen
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            content = `
+                <a href="#/admin/timetable" class="btn btn-secondary mb-lg">← Zurück</a>
+                <p class="text-error">Fehler beim Laden: ${error.message}</p>
+            `;
+        }
+
+        this.render(content);
+    },
+
+    openTTModal() {
+        document.getElementById('tt-modal-overlay').classList.add('visible');
+    },
+
+    closeTTModal() {
+        document.getElementById('tt-modal-overlay').classList.remove('visible');
+    },
+
+    addTimetableEntry(day, lessonNr, startTime, endTime) {
+        document.getElementById('tt-modal-title').textContent = `Neue Stunde — ${day}, ${lessonNr}. Stunde`;
+        document.getElementById('tt-entry-id').value = '';
+        document.getElementById('tt-entry-day').value = day;
+        document.getElementById('tt-entry-lesson').value = lessonNr;
+        document.getElementById('tt-subject').value = '';
+        document.getElementById('tt-teacher').value = '';
+        document.getElementById('tt-room').value = '';
+        document.getElementById('tt-start').value = startTime;
+        document.getElementById('tt-end').value = endTime;
+        document.getElementById('tt-delete-btn').style.display = 'none';
+        this.openTTModal();
+    },
+
+    editTimetableEntry(entryId, day, lessonNr) {
+        // Find the entry in stored data
+        const dayEntries = this.timetableEditData.entries[day] || [];
+        const entry = dayEntries.find(e => e.id === entryId);
+        if (!entry) return;
+
+        document.getElementById('tt-modal-title').textContent = `Stunde bearbeiten — ${day}, ${lessonNr}. Stunde`;
+        document.getElementById('tt-entry-id').value = entryId;
+        document.getElementById('tt-entry-day').value = day;
+        document.getElementById('tt-entry-lesson').value = lessonNr;
+
+        // Match subject by name
+        const subj = this.timetableEditData.subjects.find(s => s.name === entry.subject || s.short_name === entry.shortName);
+        document.getElementById('tt-subject').value = subj ? subj.id : '';
+
+        // Match teacher by name
+        const teacher = this.timetableEditData.teachers.find(t => `${t.first_name} ${t.last_name}` === entry.teacher);
+        document.getElementById('tt-teacher').value = teacher ? teacher.id : '';
+
+        // Match room by name
+        const room = this.timetableEditData.rooms.find(r => r.name === entry.room);
+        document.getElementById('tt-room').value = room ? room.id : '';
+
+        document.getElementById('tt-start').value = entry.startTime ? entry.startTime.slice(0, 5) : '';
+        document.getElementById('tt-end').value = entry.endTime ? entry.endTime.slice(0, 5) : '';
+        document.getElementById('tt-delete-btn').style.display = 'block';
+        this.openTTModal();
+    },
+
+    async saveTimetableEntry(event) {
+        event.preventDefault();
+        const entryId = document.getElementById('tt-entry-id').value;
+        const data = {
+            classId: this.timetableEditData.classId,
+            weekday: document.getElementById('tt-entry-day').value,
+            lessonNumber: parseInt(document.getElementById('tt-entry-lesson').value),
+            subjectId: document.getElementById('tt-subject').value || null,
+            teacherId: document.getElementById('tt-teacher').value || null,
+            roomId: document.getElementById('tt-room').value || null,
+            startTime: document.getElementById('tt-start').value,
+            endTime: document.getElementById('tt-end').value,
+            entryType: 'lesson',
+        };
+
+        try {
+            if (entryId) {
+                await API.admin.updateTimetableEntry(entryId, data);
+            } else {
+                await API.admin.createTimetableEntry(data);
+            }
+            this.closeTTModal();
+            this.renderAdminTimetableEdit(this.timetableEditData.classId);
+        } catch (error) {
+            alert('❌ Fehler: ' + error.message);
+        }
+    },
+
+    async deleteTimetableEntry() {
+        const entryId = document.getElementById('tt-entry-id').value;
+        if (!entryId) return;
+        if (!confirm('Diese Stunde wirklich löschen?')) return;
+
+        try {
+            await API.admin.deleteTimetableEntry(entryId);
+            this.closeTTModal();
+            this.renderAdminTimetableEdit(this.timetableEditData.classId);
+        } catch (error) {
+            alert('❌ Fehler: ' + error.message);
+        }
     },
 
     async renderAdminSickNotes() {

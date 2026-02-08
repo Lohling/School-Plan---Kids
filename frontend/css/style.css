@@ -890,6 +890,15 @@ input, select, textarea {
     background-color: #d0d0d0;
 }
 
+.btn-danger {
+    background-color: var(--color-error);
+    color: var(--text-light);
+}
+
+.btn-danger:hover {
+    background-color: #c62828;
+}
+
 .btn-block {
     width: 100%;
 }
@@ -1003,6 +1012,107 @@ input, select, textarea {
     
     .modal {
         padding: var(--spacing-md);
+    }
+}
+
+/* =====================================================
+   TIMETABLE EDITOR GRID
+   ===================================================== */
+
+.tt-edit-grid {
+    display: grid;
+    grid-template-columns: 70px repeat(5, 1fr);
+    gap: 4px;
+    margin-top: var(--spacing-md);
+}
+
+.tt-edit-header-cell {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+    padding: var(--spacing-sm);
+    text-align: center;
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-sm);
+}
+
+.tt-edit-time-cell {
+    background-color: var(--bg-light);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    text-align: center;
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.tt-edit-time-cell strong {
+    font-size: var(--font-size-md);
+    color: var(--text-dark);
+}
+
+.tt-edit-cell {
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs);
+    min-height: 65px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.tt-edit-cell.filled {
+    background-color: #e8f5e9;
+    border-color: #c8e6c9;
+}
+
+.tt-edit-cell.filled:hover {
+    border-color: var(--primary-red);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: scale(1.03);
+}
+
+.tt-edit-cell.empty {
+    background-color: var(--bg-light);
+    border: 2px dashed #ddd;
+}
+
+.tt-edit-cell.empty:hover {
+    border-color: var(--primary-red);
+    background-color: #fff3e0;
+}
+
+.tt-cell-subject {
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    color: var(--text-dark);
+}
+
+.tt-cell-detail {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+.tt-cell-add {
+    font-size: 24px;
+    color: #ccc;
+    line-height: 1;
+}
+
+.tt-edit-cell.empty:hover .tt-cell-add {
+    color: var(--primary-red);
+}
+
+@media (max-width: 600px) {
+    .tt-edit-grid {
+        min-width: 600px;
+        overflow-x: auto;
     }
 }
 
