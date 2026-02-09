@@ -224,6 +224,29 @@ const Components = {
     },
 
     /**
+     * Rendert einen kompakten Banner mit der neuesten Nachricht
+     */
+    latestNewsBanner(news = []) {
+        if (!news || news.length === 0) return '';
+
+        const latest = news[0];
+        const priorityClass = latest.priority || 'normal';
+        const date = new Date(latest.published_at || latest.created_at).toLocaleDateString('de-DE');
+
+        return `
+            <div class="latest-news-banner ${priorityClass}">
+                <div class="latest-news-header">
+                    <span class="latest-news-label">Neueste Mitteilung</span>
+                    <span class="latest-news-date">${date}</span>
+                </div>
+                <div class="latest-news-title">${latest.title}</div>
+                <div class="latest-news-content">${(latest.content || '').replace(/\\n/g, '<br>')}</div>
+                <a href="#/news" class="latest-news-link">Alle Neuigkeiten ansehen &rarr;</a>
+            </div>
+        `;
+    },
+
+    /**
      * Rendert ein News-Item
      */
     newsItem(item) {

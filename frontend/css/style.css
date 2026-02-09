@@ -792,6 +792,74 @@ input, select, textarea {
 }
 
 /* =====================================================
+   LATEST NEWS BANNER (Startseite)
+   ===================================================== */
+
+.latest-news-banner {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--primary-red);
+    background-color: var(--bg-white);
+    box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.latest-news-banner.important {
+    border-left-color: var(--color-warning);
+    background-color: #fffde7;
+}
+
+.latest-news-banner.urgent {
+    border-left-color: var(--color-error);
+    background-color: #ffebee;
+}
+
+.latest-news-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.latest-news-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--primary-red);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.latest-news-date {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.latest-news-title {
+    font-weight: 700;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-xs);
+}
+
+.latest-news-content {
+    color: var(--text-dark);
+    line-height: 1.5;
+    font-size: var(--font-size-md);
+}
+
+.latest-news-link {
+    display: inline-block;
+    margin-top: var(--spacing-sm);
+    color: var(--primary-red);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.latest-news-link:hover {
+    text-decoration: underline;
+}
+
+/* =====================================================
    FORMS & MODALS
    ===================================================== */
 

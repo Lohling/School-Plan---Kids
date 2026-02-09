@@ -313,7 +313,7 @@ const App = {
         this.selectedClassId = null;
         const [timetableRes, newsRes] = await Promise.all([
             API.timetable.getMy().catch(() => ({ timetable: {} })),
-            API.news.getAll(null, 5).catch(() => ({ news: [] }))
+            API.news.getAll(null, 1).catch(() => ({ news: [] }))
         ]);
 
         const today = this.getTodayWeekday();
@@ -327,21 +327,19 @@ const App = {
                 </div>
             `)}
             
-            ${Components.card('Neuigkeiten', Components.newsList(newsRes.news))}
+            ${Components.latestNewsBanner(newsRes.news)}
         `;
     },
 
     async getParentDashboard() {
         const [childrenRes, newsRes, eventsRes] = await Promise.all([
             API.users.getChildren().catch(() => ({ children: [] })),
-            API.news.getAll(null, 5).catch(() => ({ news: [] })),
+            API.news.getAll(null, 1).catch(() => ({ news: [] })),
             API.news.getEvents().catch(() => ({ events: [] }))
         ]);
 
         return `
             ${Components.card('Meine Kinder', Components.childrenCards(childrenRes.children))}
-            
-            ${Components.card('Neuigkeiten', Components.newsList(newsRes.news))}
             
             ${eventsRes.events.length > 0 ? Components.card('Nächste Termine', `
                 <div class="news-list">
@@ -357,6 +355,8 @@ const App = {
                     `).join('')}
                 </div>
             `) : ''}
+            
+            ${Components.latestNewsBanner(newsRes.news)}
         `;
     },
 
@@ -365,7 +365,7 @@ const App = {
         const [timetableRes, supervisionsRes, newsRes] = await Promise.all([
             API.timetable.getMy().catch(() => ({ timetable: {} })),
             API.timetable.getSupervisions(Auth.getUser().id).catch(() => ({ supervisions: [] })),
-            API.news.getAll(null, 5).catch(() => ({ news: [] }))
+            API.news.getAll(null, 1).catch(() => ({ news: [] }))
         ]);
 
         const today = this.getTodayWeekday();
@@ -389,7 +389,7 @@ const App = {
                 `).join('')}
             `) : ''}
             
-            ${Components.card('Neuigkeiten', Components.newsList(newsRes.news))}
+            ${Components.latestNewsBanner(newsRes.news)}
         `;
     },
 
