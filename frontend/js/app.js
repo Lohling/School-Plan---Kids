@@ -1253,7 +1253,28 @@ const App = {
     },
 
     // Timetable Editor State
-    timetableEditData: { entries: [], subjects: [], rooms: [], teachers: [], classId: null, className: '' },
+    timetableEditData: { entries: [], subjects: [], rooms: [], teachers: [], classId: null, className: '', weekMode: false, weekStart: null, substitutions: [] },
+
+    getWeekDates(baseDate) {
+        const d = new Date(baseDate);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+        const monday = new Date(d.setDate(diff));
+        const dates = {};
+        const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+        WEEKDAYS.forEach((wd, i) => {
+            const dt = new Date(monday);
+            dt.setDate(monday.getDate() + i);
+            dates[wd] = dt.toISOString().split('T')[0];
+        });
+        return dates;
+    },
+
+    formatWeekLabel(weekDates) {
+        const mo = new Date(weekDates['Mo']).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+        const fr = new Date(weekDates['Fr']).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return `${mo} - ${fr}`;
+    },
 
     async renderAdminTimetableEdit(classId) {
         const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
@@ -1269,6 +1290,10 @@ const App = {
 
         let content = '';
         try {
+            const weekMode = this.timetableEditData.weekMode || false;
+            const weekStartDate = this.timetableEditData.weekStart || new Date().toISOString().split('T')[0];
+            const weekDates = this.getWeekDates(weekStartDate);
+
             const [timetableRes, subjectsRes, roomsRes, teachersRes, classesRes] = await Promise.all([
                 API.timetable.getForClass(classId),
                 API.admin.getSubjects(),
@@ -1277,6 +1302,13 @@ const App = {
                 API.classes.getAll()
             ]);
 
+            // Load substitutions if in week mode
+            let substitutions = [];
+            if (weekMode) {
+                const subRes = await API.admin.getSubstitutions(classId, weekDates['Mo'], weekDates['Fr']);
+                substitutions = subRes.substitutions || [];
+            }
+
             const cls = (classesRes.classes || []).find(c => c.id === classId);
             const className = cls ? cls.name : 'Klasse';
             const timetable = timetableRes.timetable || {};
@@ -1284,23 +1316,44 @@ const App = {
             const rooms = roomsRes.rooms || [];
             const teachers = (teachersRes.users || []).filter(u => u.role === 'teacher');
 
-            // Store for later use
-            this.timetableEditData = { entries: timetable, subjects, rooms, teachers, classId, className };
+            this.timetableEditData = { entries: timetable, subjects, rooms, teachers, classId, className, weekMode, weekStart: weekStartDate, substitutions };
 
             const subjectOptions = subjects.map(s => `<option value="${s.id}">${s.icon || ''} ${s.name}</option>`).join('');
             const roomOptions = rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             const teacherOptions = teachers.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
 
+            // Week navigation
+            const weekLabel = this.formatWeekLabel(weekDates);
+
+            const modeToggle = `
+                <div class="week-mode-bar">
+                    <div class="week-mode-tabs">
+                        <button class="role-filter-btn ${!weekMode ? 'active' : ''}" onclick="App.switchTimetableMode(false)">Grundplan</button>
+                        <button class="role-filter-btn ${weekMode ? 'active' : ''}" onclick="App.switchTimetableMode(true)">Wochenplanung</button>
+                    </div>
+                    ${weekMode ? `
+                    <div class="week-nav">
+                        <button class="btn btn-secondary btn-sm" onclick="App.shiftWeek(-1)">&#9664;</button>
+                        <span class="week-label">${weekLabel}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="App.shiftWeek(1)">&#9654;</button>
+                        <button class="btn btn-secondary btn-sm" onclick="App.goToCurrentWeek()" style="margin-left:4px;">Heute</button>
+                    </div>` : ''}
+                </div>
+            `;
+
             // Build grid
             let gridHTML = `<div class="tt-edit-grid">`;
-            // Header row
             gridHTML += `<div class="tt-edit-header-cell">Std.</div>`;
             WEEKDAYS.forEach(d => {
-                gridHTML += `<div class="tt-edit-header-cell">${WEEKDAY_NAMES[d]}</div>`;
+                let headerText = WEEKDAY_NAMES[d];
+                if (weekMode) {
+                    const dateStr = new Date(weekDates[d]).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                    headerText += `<br><small>${dateStr}</small>`;
+                }
+                gridHTML += `<div class="tt-edit-header-cell">${headerText}</div>`;
             });
 
             LESSON_TIMES.forEach(lesson => {
-                // Time cell
                 gridHTML += `<div class="tt-edit-time-cell">
                     <strong>${lesson.nr}.</strong><br>
                     <small>${lesson.start}<br>${lesson.end}</small>
@@ -1310,20 +1363,56 @@ const App = {
                     const entries = (timetable[day] || []).filter(e => e.lessonNumber === lesson.nr && e.type !== 'break');
                     const entry = entries[0];
 
-                    if (entry) {
-                        gridHTML += `
-                            <div class="tt-edit-cell filled" onclick="App.editTimetableEntry('${entry.id}', '${day}', ${lesson.nr})">
-                                <div class="tt-cell-subject">${entry.icon || ''} ${entry.shortName || entry.subject || ''}</div>
-                                <div class="tt-cell-detail">${entry.teacher ? entry.teacher.split(' ').pop() : ''}</div>
-                                <div class="tt-cell-detail">${entry.room || ''}</div>
-                            </div>
-                        `;
+                    if (weekMode) {
+                        // In week mode: show substitutions overlaid on base entries
+                        const sub = substitutions.find(s => s.weekday === day && s.lesson_number === lesson.nr);
+
+                        if (entry) {
+                            if (sub) {
+                                // Substitution exists
+                                if (sub.is_cancelled) {
+                                    gridHTML += `
+                                        <div class="tt-edit-cell filled sub-cancelled" onclick="App.editSubstitution('${sub.id}', '${entry.id}', '${day}', ${lesson.nr}, '${weekDates[day]}')">
+                                            <div class="tt-cell-subject"><s>${entry.icon || ''} ${entry.shortName || entry.subject || ''}</s></div>
+                                            <div class="tt-cell-detail sub-badge">Entfällt</div>
+                                            ${sub.note_for_students ? `<div class="tt-cell-detail sub-note">${sub.note_for_students}</div>` : ''}
+                                        </div>`;
+                                } else {
+                                    gridHTML += `
+                                        <div class="tt-edit-cell filled sub-changed" onclick="App.editSubstitution('${sub.id}', '${entry.id}', '${day}', ${lesson.nr}, '${weekDates[day]}')">
+                                            <div class="tt-cell-subject">${sub.substitute_subject || entry.icon || ''} ${sub.substitute_subject || entry.shortName || entry.subject || ''}</div>
+                                            <div class="tt-cell-detail">${sub.substitute_teacher || entry.teacher ? (sub.substitute_teacher || entry.teacher).split(' ').pop() : ''}</div>
+                                            <div class="tt-cell-detail">${sub.substitute_room || entry.room || ''}</div>
+                                            <div class="tt-cell-detail sub-badge">Vertretung</div>
+                                        </div>`;
+                                }
+                            } else {
+                                // No substitution — show base entry, clickable to add one
+                                gridHTML += `
+                                    <div class="tt-edit-cell filled" onclick="App.addSubstitution('${entry.id}', '${day}', ${lesson.nr}, '${weekDates[day]}')">
+                                        <div class="tt-cell-subject">${entry.icon || ''} ${entry.shortName || entry.subject || ''}</div>
+                                        <div class="tt-cell-detail">${entry.teacher ? entry.teacher.split(' ').pop() : ''}</div>
+                                        <div class="tt-cell-detail">${entry.room || ''}</div>
+                                    </div>`;
+                            }
+                        } else {
+                            gridHTML += `<div class="tt-edit-cell empty"></div>`;
+                        }
                     } else {
-                        gridHTML += `
-                            <div class="tt-edit-cell empty" onclick="App.addTimetableEntry('${day}', ${lesson.nr}, '${lesson.start}', '${lesson.end}')">
-                                <span class="tt-cell-add">＋</span>
-                            </div>
-                        `;
+                        // Base plan mode (original)
+                        if (entry) {
+                            gridHTML += `
+                                <div class="tt-edit-cell filled" onclick="App.editTimetableEntry('${entry.id}', '${day}', ${lesson.nr})">
+                                    <div class="tt-cell-subject">${entry.icon || ''} ${entry.shortName || entry.subject || ''}</div>
+                                    <div class="tt-cell-detail">${entry.teacher ? entry.teacher.split(' ').pop() : ''}</div>
+                                    <div class="tt-cell-detail">${entry.room || ''}</div>
+                                </div>`;
+                        } else {
+                            gridHTML += `
+                                <div class="tt-edit-cell empty" onclick="App.addTimetableEntry('${day}', ${lesson.nr}, '${lesson.start}', '${lesson.end}')">
+                                    <span class="tt-cell-add">+</span>
+                                </div>`;
+                        }
                     }
                 });
             });
@@ -1332,74 +1421,167 @@ const App = {
             content = `
                 <div class="flex" style="justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <h1 class="page-title" style="margin:0;">Stundenplan ${className}</h1>
-                    <a href="#/admin/timetable" class="btn btn-secondary">← Zurück</a>
+                    <a href="#/admin/timetable" class="btn btn-secondary">Zurueck</a>
                 </div>
-                <p class="text-muted mt-sm mb-lg">Klicke auf eine Zelle um eine Stunde hinzuzufügen oder zu bearbeiten.</p>
+                ${modeToggle}
+                <p class="text-muted mt-sm mb-lg">${weekMode ? 'Klicke auf eine Stunde um eine Vertretung/Aenderung fuer diese Woche einzutragen.' : 'Klicke auf eine Zelle um den Grundplan zu bearbeiten.'}</p>
                 ${gridHTML}
             `;
 
-            // Modal for editing
-            content += `
-                <div class="modal-overlay" id="tt-modal-overlay">
-                    <div class="modal">
-                        <div class="modal-header">
-                            <h2 id="tt-modal-title">Stunde bearbeiten</h2>
-                            <button class="modal-close" onclick="App.closeTTModal()">✕</button>
+            // Base plan modal (only shown in base mode)
+            if (!weekMode) {
+                content += `
+                    <div class="modal-overlay" id="tt-modal-overlay">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h2 id="tt-modal-title">Stunde bearbeiten</h2>
+                                <button class="modal-close" onclick="App.closeTTModal()">X</button>
+                            </div>
+                            <form id="tt-entry-form" onsubmit="App.saveTimetableEntry(event)">
+                                <input type="hidden" id="tt-entry-id">
+                                <input type="hidden" id="tt-entry-day">
+                                <input type="hidden" id="tt-entry-lesson">
+                                <div class="form-group">
+                                    <label class="form-label">Fach</label>
+                                    <select id="tt-subject" class="form-input" required>
+                                        <option value="">-- Fach waehlen --</option>
+                                        ${subjectOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Lehrer</label>
+                                    <select id="tt-teacher" class="form-input">
+                                        <option value="">-- Lehrer waehlen --</option>
+                                        ${teacherOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Raum</label>
+                                    <select id="tt-room" class="form-input">
+                                        <option value="">-- Raum waehlen --</option>
+                                        ${roomOptions}
+                                    </select>
+                                </div>
+                                <div class="flex gap-sm" style="flex-wrap:wrap;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label class="form-label">Von</label>
+                                        <input type="time" id="tt-start" class="form-input" required>
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label class="form-label">Bis</label>
+                                        <input type="time" id="tt-end" class="form-input" required>
+                                    </div>
+                                </div>
+                                <div class="flex gap-sm mt-md">
+                                    <button type="submit" class="btn btn-primary" style="flex:1;">Speichern</button>
+                                    <button type="button" class="btn btn-secondary" onclick="App.closeTTModal()" style="flex:1;">Abbrechen</button>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-block mt-md" id="tt-delete-btn" style="display:none;" onclick="App.deleteTimetableEntry()">
+                                    Stunde loeschen
+                                </button>
+                            </form>
                         </div>
-                        <form id="tt-entry-form" onsubmit="App.saveTimetableEntry(event)">
-                            <input type="hidden" id="tt-entry-id">
-                            <input type="hidden" id="tt-entry-day">
-                            <input type="hidden" id="tt-entry-lesson">
-                            <div class="form-group">
-                                <label class="form-label">Fach</label>
-                                <select id="tt-subject" class="form-input" required>
-                                    <option value="">-- Fach wählen --</option>
-                                    ${subjectOptions}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Lehrer</label>
-                                <select id="tt-teacher" class="form-input">
-                                    <option value="">-- Lehrer wählen --</option>
-                                    ${teacherOptions}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Raum</label>
-                                <select id="tt-room" class="form-input">
-                                    <option value="">-- Raum wählen --</option>
-                                    ${roomOptions}
-                                </select>
-                            </div>
-                            <div class="flex gap-sm" style="flex-wrap:wrap;">
-                                <div class="form-group" style="flex:1;">
-                                    <label class="form-label">Von</label>
-                                    <input type="time" id="tt-start" class="form-input" required>
-                                </div>
-                                <div class="form-group" style="flex:1;">
-                                    <label class="form-label">Bis</label>
-                                    <input type="time" id="tt-end" class="form-input" required>
-                                </div>
-                            </div>
-                            <div class="flex gap-sm mt-md">
-                                <button type="submit" class="btn btn-primary" style="flex:1;">Speichern</button>
-                                <button type="button" class="btn btn-secondary" onclick="App.closeTTModal()" style="flex:1;">Abbrechen</button>
-                            </div>
-                            <button type="button" class="btn btn-danger btn-block mt-md" id="tt-delete-btn" style="display:none;" onclick="App.deleteTimetableEntry()">
-                                Stunde löschen
-                            </button>
-                        </form>
                     </div>
-                </div>
-            `;
+                `;
+            }
+
+            // Substitution modal (only in week mode)
+            if (weekMode) {
+                content += `
+                    <div class="modal-overlay" id="sub-modal-overlay">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <h2 id="sub-modal-title">Vertretung / Aenderung</h2>
+                                <button class="modal-close" onclick="App.closeSubModal()">X</button>
+                            </div>
+                            <form id="sub-entry-form" onsubmit="App.saveSubstitution(event)">
+                                <input type="hidden" id="sub-id">
+                                <input type="hidden" id="sub-entry-id">
+                                <input type="hidden" id="sub-date">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <input type="checkbox" id="sub-cancelled"> Stunde faellt aus
+                                    </label>
+                                </div>
+                                <div id="sub-fields">
+                                    <div class="form-group">
+                                        <label class="form-label">Vertretungslehrer</label>
+                                        <select id="sub-teacher" class="form-input">
+                                            <option value="">-- Kein Wechsel --</option>
+                                            ${teacherOptions}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Vertretungsfach</label>
+                                        <select id="sub-subject" class="form-input">
+                                            <option value="">-- Kein Wechsel --</option>
+                                            ${subjectOptions}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Vertretungsraum</label>
+                                        <select id="sub-room" class="form-input">
+                                            <option value="">-- Kein Wechsel --</option>
+                                            ${roomOptions}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Grund (intern)</label>
+                                    <input type="text" id="sub-reason" class="form-input" placeholder="z.B. Lehrer krank">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Hinweis fuer Schueler</label>
+                                    <input type="text" id="sub-note" class="form-input" placeholder="z.B. Bringt Malsachen mit">
+                                </div>
+                                <div class="flex gap-sm mt-md">
+                                    <button type="submit" class="btn btn-primary" style="flex:1;">Speichern</button>
+                                    <button type="button" class="btn btn-secondary" onclick="App.closeSubModal()" style="flex:1;">Abbrechen</button>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-block mt-md" id="sub-delete-btn" style="display:none;" onclick="App.deleteSubstitution()">
+                                    Vertretung loeschen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
         } catch (error) {
             content = `
-                <a href="#/admin/timetable" class="btn btn-secondary mb-lg">← Zurück</a>
+                <a href="#/admin/timetable" class="btn btn-secondary mb-lg">Zurueck</a>
                 <p class="text-error">Fehler beim Laden: ${error.message}</p>
             `;
         }
 
         this.render(content);
+
+        // Bind cancelled checkbox toggle
+        const cancelledCheckbox = document.getElementById('sub-cancelled');
+        if (cancelledCheckbox) {
+            cancelledCheckbox.addEventListener('change', () => {
+                document.getElementById('sub-fields').style.display = cancelledCheckbox.checked ? 'none' : 'block';
+            });
+        }
+    },
+
+    switchTimetableMode(weekMode) {
+        this.timetableEditData.weekMode = weekMode;
+        if (weekMode && !this.timetableEditData.weekStart) {
+            this.timetableEditData.weekStart = new Date().toISOString().split('T')[0];
+        }
+        this.renderAdminTimetableEdit(this.timetableEditData.classId);
+    },
+
+    shiftWeek(direction) {
+        const current = new Date(this.timetableEditData.weekStart);
+        current.setDate(current.getDate() + direction * 7);
+        this.timetableEditData.weekStart = current.toISOString().split('T')[0];
+        this.renderAdminTimetableEdit(this.timetableEditData.classId);
+    },
+
+    goToCurrentWeek() {
+        this.timetableEditData.weekStart = new Date().toISOString().split('T')[0];
+        this.renderAdminTimetableEdit(this.timetableEditData.classId);
     },
 
     openTTModal() {
@@ -1484,11 +1666,104 @@ const App = {
     async deleteTimetableEntry() {
         const entryId = document.getElementById('tt-entry-id').value;
         if (!entryId) return;
-        if (!confirm('Diese Stunde wirklich löschen?')) return;
+        if (!confirm('Diese Stunde wirklich loeschen?')) return;
 
         try {
             await API.admin.deleteTimetableEntry(entryId);
             this.closeTTModal();
+            this.renderAdminTimetableEdit(this.timetableEditData.classId);
+        } catch (error) {
+            alert('Fehler: ' + error.message);
+        }
+    },
+
+    // =====================================================
+    // SUBSTITUTION (Week-based) helpers
+    // =====================================================
+
+    openSubModal() {
+        document.getElementById('sub-modal-overlay').classList.add('visible');
+    },
+
+    closeSubModal() {
+        document.getElementById('sub-modal-overlay').classList.remove('visible');
+    },
+
+    addSubstitution(entryId, day, lessonNr, date) {
+        const WEEKDAY_NAMES = { Mo: 'Montag', Di: 'Dienstag', Mi: 'Mittwoch', Do: 'Donnerstag', Fr: 'Freitag' };
+        const dateStr = new Date(date).toLocaleDateString('de-DE');
+        document.getElementById('sub-modal-title').textContent = `Vertretung: ${WEEKDAY_NAMES[day]}, ${dateStr}, ${lessonNr}. Stunde`;
+        document.getElementById('sub-id').value = '';
+        document.getElementById('sub-entry-id').value = entryId;
+        document.getElementById('sub-date').value = date;
+        document.getElementById('sub-cancelled').checked = false;
+        document.getElementById('sub-fields').style.display = 'block';
+        document.getElementById('sub-teacher').value = '';
+        document.getElementById('sub-subject').value = '';
+        document.getElementById('sub-room').value = '';
+        document.getElementById('sub-reason').value = '';
+        document.getElementById('sub-note').value = '';
+        document.getElementById('sub-delete-btn').style.display = 'none';
+        this.openSubModal();
+    },
+
+    editSubstitution(subId, entryId, day, lessonNr, date) {
+        const WEEKDAY_NAMES = { Mo: 'Montag', Di: 'Dienstag', Mi: 'Mittwoch', Do: 'Donnerstag', Fr: 'Freitag' };
+        const dateStr = new Date(date).toLocaleDateString('de-DE');
+        const sub = this.timetableEditData.substitutions.find(s => s.id === subId);
+        if (!sub) return;
+
+        document.getElementById('sub-modal-title').textContent = `Vertretung: ${WEEKDAY_NAMES[day]}, ${dateStr}, ${lessonNr}. Stunde`;
+        document.getElementById('sub-id').value = subId;
+        document.getElementById('sub-entry-id').value = entryId;
+        document.getElementById('sub-date').value = date;
+        document.getElementById('sub-cancelled').checked = sub.is_cancelled;
+        document.getElementById('sub-fields').style.display = sub.is_cancelled ? 'none' : 'block';
+        document.getElementById('sub-teacher').value = sub.substitute_teacher_id || '';
+        document.getElementById('sub-subject').value = sub.substitute_subject_id || '';
+        document.getElementById('sub-room').value = sub.substitute_room_id || '';
+        document.getElementById('sub-reason').value = sub.reason || '';
+        document.getElementById('sub-note').value = sub.note_for_students || '';
+        document.getElementById('sub-delete-btn').style.display = 'block';
+        this.openSubModal();
+    },
+
+    async saveSubstitution(event) {
+        event.preventDefault();
+        const subId = document.getElementById('sub-id').value;
+        const data = {
+            originalEntryId: document.getElementById('sub-entry-id').value,
+            date: document.getElementById('sub-date').value,
+            isCancelled: document.getElementById('sub-cancelled').checked,
+            substituteTeacherId: document.getElementById('sub-teacher').value || null,
+            substituteSubjectId: document.getElementById('sub-subject').value || null,
+            substituteRoomId: document.getElementById('sub-room').value || null,
+            reason: document.getElementById('sub-reason').value || null,
+            noteForStudents: document.getElementById('sub-note').value || null,
+        };
+
+        try {
+            if (subId) {
+                await API.admin.updateSubstitution(subId, data);
+            } else {
+                await API.admin.createSubstitution(data);
+            }
+            this.closeSubModal();
+            App.showToast('Vertretung gespeichert');
+            this.renderAdminTimetableEdit(this.timetableEditData.classId);
+        } catch (error) {
+            alert('Fehler: ' + error.message);
+        }
+    },
+
+    async deleteSubstitution() {
+        const subId = document.getElementById('sub-id').value;
+        if (!subId) return;
+        if (!confirm('Vertretung wirklich loeschen?')) return;
+        try {
+            await API.admin.deleteSubstitution(subId);
+            this.closeSubModal();
+            App.showToast('Vertretung geloescht');
             this.renderAdminTimetableEdit(this.timetableEditData.classId);
         } catch (error) {
             alert('Fehler: ' + error.message);

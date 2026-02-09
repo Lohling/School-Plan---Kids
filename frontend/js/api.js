@@ -309,6 +309,22 @@ const API = {
             return API.post('/admin/substitution', data);
         },
 
+        updateSubstitution(id, data) {
+            return API.put(`/admin/substitution/${id}`, data);
+        },
+
+        deleteSubstitution(id) {
+            return API.delete(`/admin/substitution/${id}`);
+        },
+
+        getSubstitutions(classId = null, startDate = null, endDate = null) {
+            const params = new URLSearchParams();
+            if (classId) params.append('classId', classId);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            return API.get(`/admin/substitutions?${params}`);
+        },
+
         getLessonContents(classId = null, date = null) {
             const params = new URLSearchParams();
             if (classId) params.append('classId', classId);

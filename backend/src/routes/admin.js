@@ -320,6 +320,100 @@ router.post('/substitution', [
 });
 
 /**
+ * PUT /api/admin/substitution/:id
+ * Vertretung aktualisieren
+ */
+router.put('/substitution/:id', async (req, res) => {
+    try {
+        const { substituteTeacherId, substituteSubjectId, substituteRoomId, reason, noteForStudents, isCancelled } = req.body;
+
+        await query(
+            `UPDATE substitutions 
+             SET substitute_teacher_id = $1, substitute_subject_id = $2, substitute_room_id = $3,
+                 reason = $4, note_for_students = $5, is_cancelled = $6
+             WHERE id = $7`,
+            [substituteTeacherId || null, substituteSubjectId || null, substituteRoomId || null,
+             reason || null, noteForStudents || null, isCancelled || false, req.params.id]
+        );
+
+        res.json({ success: true, message: 'Vertretung aktualisiert' });
+    } catch (error) {
+        res.status(500).json({ error: 'Fehler beim Aktualisieren' });
+    }
+});
+
+/**
+ * DELETE /api/admin/substitution/:id
+ * Vertretung löschen
+ */
+router.delete('/substitution/:id', async (req, res) => {
+    try {
+        await query('DELETE FROM substitutions WHERE id = $1', [req.params.id]);
+        res.json({ success: true, message: 'Vertretung gelöscht' });
+    } catch (error) {
+        res.status(500).json({ error: 'Fehler beim Löschen' });
+    }
+});
+
+/**
+ * GET /api/admin/substitutions
+ * Vertretungen für einen Zeitraum und optional eine Klasse abrufen
+ */
+router.get('/substitutions', async (req, res) => {
+    try {
+        const { classId, startDate, endDate } = req.query;
+
+        let sql = `
+            SELECT 
+                sub.id, sub.original_entry_id, sub.date, sub.is_cancelled, 
+                sub.reason, sub.note_for_students,
+                sub.substitute_teacher_id, sub.substitute_subject_id, sub.substitute_room_id,
+                te.lesson_number, te.weekday, te.class_id,
+                orig_s.name as original_subject,
+                sub_s.name as substitute_subject,
+                orig_t.first_name || ' ' || orig_t.last_name as original_teacher,
+                sub_t.first_name || ' ' || sub_t.last_name as substitute_teacher,
+                orig_r.name as original_room,
+                sub_r.name as substitute_room,
+                c.name as class_name
+            FROM substitutions sub
+            JOIN timetable_entries te ON sub.original_entry_id = te.id
+            JOIN classes c ON te.class_id = c.id
+            LEFT JOIN subjects orig_s ON te.subject_id = orig_s.id
+            LEFT JOIN subjects sub_s ON sub.substitute_subject_id = sub_s.id
+            LEFT JOIN users orig_t ON te.teacher_id = orig_t.id
+            LEFT JOIN users sub_t ON sub.substitute_teacher_id = sub_t.id
+            LEFT JOIN rooms orig_r ON te.room_id = orig_r.id
+            LEFT JOIN rooms sub_r ON sub.substitute_room_id = sub_r.id
+            WHERE c.school_id = $1
+        `;
+
+        const params = [req.user.school_id];
+
+        if (classId) {
+            params.push(classId);
+            sql += ` AND te.class_id = $${params.length}`;
+        }
+        if (startDate) {
+            params.push(startDate);
+            sql += ` AND sub.date >= $${params.length}`;
+        }
+        if (endDate) {
+            params.push(endDate);
+            sql += ` AND sub.date <= $${params.length}`;
+        }
+
+        sql += ' ORDER BY sub.date, c.name, te.lesson_number';
+
+        const substitutions = await getMany(sql, params);
+
+        res.json({ substitutions });
+    } catch (error) {
+        res.status(500).json({ error: 'Fehler beim Laden' });
+    }
+});
+
+/**
  * GET /api/admin/lesson-contents
  * Alle Unterrichtsinhalte einsehen
  */
