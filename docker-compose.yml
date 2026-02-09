@@ -1,0 +1,68 @@
+services:
+  # PostgreSQL Datenbank
+  db:
+    image: postgres:15-alpine
+    container_name: schoolplan-db
+    environment:
+      POSTGRES_DB: schoolplan
+      POSTGRES_USER: schoolplan_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ./backend/database/seed2.sql:/docker-entrypoint-initdb.d/03-seed2.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - schoolplan-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U schoolplan_user -d schoolplan"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (Node.js/Express)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: schoolplan-backend
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: schoolplan
+      DB_USER: schoolplan_user
+      DB_PASSWORD: ${DB_PASSWORD:-secure_password_123}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_production}
+      SESSION_SECRET: ${SESSION_SECRET:-session_secret_change_me}
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - schoolplan-network
+    restart: unless-stopped
+
+  # Frontend (Nginx serving static files)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: schoolplan-frontend
+    ports:
+      - "2080:80"
+    depends_on:
+      - backend
+    networks:
+      - schoolplan-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  schoolplan-network:
+    driver: bridge
