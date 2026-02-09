@@ -184,7 +184,7 @@ const App = {
         const content = `
             <div class="login-page">
                 <div class="login-container">
-                    <div class="login-logo">🏫</div>
+                    <div class="login-logo">School Plan</div>
                     <h1 class="login-title">School Plan - <span class="highlight">Kids</span></h1>
                     <p class="login-subtitle">Dein digitaler Vertretungsplan</p>
                     
@@ -192,43 +192,43 @@ const App = {
                     
                     <form class="login-form" onsubmit="App.handleLogin(event)">
                         <div class="form-group">
-                            <label class="form-label" for="email">📧 E-Mail</label>
+                            <label class="form-label" for="email">E-Mail</label>
                             <input type="email" id="email" name="email" class="form-input" 
                                    placeholder="deine@email.de" required>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" for="password">🔒 Passwort</label>
+                            <label class="form-label" for="password">Passwort</label>
                             <input type="password" id="password" name="password" class="form-input" 
                                    placeholder="••••••••" required>
                         </div>
                         
                         <button type="submit" class="login-btn" id="login-btn">
-                            Anmelden 🚀
+                            Anmelden
                         </button>
                     </form>
                     
                     <div class="login-roles">
-                        <span class="role-badge student">📚 Schüler</span>
-                        <span class="role-badge parent">👨‍👩‍👧 Eltern</span>
-                        <span class="role-badge teacher">👨‍🏫 Lehrer</span>
-                        <span class="role-badge admin">⚙️ Admin</span>
+                        <span class="role-badge student">Schüler</span>
+                        <span class="role-badge parent">Eltern</span>
+                        <span class="role-badge teacher">Lehrer</span>
+                        <span class="role-badge admin">Admin</span>
                     </div>
 
                     <div class="test-login-section">
-                        <p class="test-login-label">🧪 Schnell-Login (Test)</p>
+                        <p class="test-login-label">Schnell-Login (Test)</p>
                         <div class="test-login-buttons">
                             <button class="test-login-btn student" onclick="App.fillTestLogin('leon.klein@schule.de', 'test1234')">
-                                🦊 Leon (Schüler)
+                                Leon (Schüler)
                             </button>
                             <button class="test-login-btn parent" onclick="App.fillTestLogin('peter.klein@eltern.de', 'test1234')">
-                                👨‍💼 Peter (Eltern)
+                                Peter (Eltern)
                             </button>
                             <button class="test-login-btn teacher" onclick="App.fillTestLogin('mueller@schule.de', 'test1234')">
-                                👩‍🏫 Fr. Müller (Lehrer)
+                                Fr. Müller (Lehrer)
                             </button>
                             <button class="test-login-btn admin" onclick="App.fillTestLogin('admin@schule.de', 'test1234')">
-                                ⚙️ Admin
+                                Admin
                             </button>
                         </div>
                     </div>
@@ -264,7 +264,7 @@ const App = {
             errorDiv.textContent = result.error;
             errorDiv.classList.remove('hidden');
             btn.disabled = false;
-            btn.textContent = 'Anmelden 🚀';
+            btn.textContent = 'Anmelden';
         }
     },
 
@@ -301,7 +301,6 @@ const App = {
 
         const content = `
             <h1 class="page-title">
-                <span class="icon">👋</span>
                 Hallo, ${user.firstName}!
             </h1>
             ${dashboardContent}
@@ -321,14 +320,14 @@ const App = {
         const todayLessons = timetableRes.timetable[today] || [];
 
         return `
-            ${Components.card('📅 Dein Stundenplan heute', `
+            ${Components.card('Dein Stundenplan heute', `
                 ${Components.dayTabs(today)}
                 <div id="timetable-container">
                     ${Components.timetable(todayLessons)}
                 </div>
             `)}
             
-            ${Components.card('📢 Neuigkeiten', Components.newsList(newsRes.news))}
+            ${Components.card('Neuigkeiten', Components.newsList(newsRes.news))}
         `;
     },
 
@@ -340,11 +339,11 @@ const App = {
         ]);
 
         return `
-            ${Components.card('👧 Meine Kinder', Components.childrenCards(childrenRes.children))}
+            ${Components.card('Meine Kinder', Components.childrenCards(childrenRes.children))}
             
-            ${Components.card('📢 Neuigkeiten', Components.newsList(newsRes.news))}
+            ${Components.card('Neuigkeiten', Components.newsList(newsRes.news))}
             
-            ${eventsRes.events.length > 0 ? Components.card('📆 Nächste Termine', `
+            ${eventsRes.events.length > 0 ? Components.card('Nächste Termine', `
                 <div class="news-list">
                     ${eventsRes.events.slice(0, 3).map(e => `
                         <div class="news-item">
@@ -353,7 +352,7 @@ const App = {
                                 <div class="news-date">${new Date(e.event_date).toLocaleDateString('de-DE')}</div>
                             </div>
                             ${e.description ? `<p>${e.description}</p>` : ''}
-                            ${e.location ? `<p class="text-muted">📍 ${e.location}</p>` : ''}
+                            ${e.location ? `<p class="text-muted">${e.location}</p>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -374,23 +373,23 @@ const App = {
         const todaySupervisions = (supervisionsRes.supervisions || []).filter(s => s.weekday === today);
 
         return `
-            ${Components.card('📅 Mein Stundenplan heute', `
+            ${Components.card('Mein Stundenplan heute', `
                 ${Components.dayTabs(today)}
                 <div id="timetable-container">
                     ${Components.timetable(todayLessons)}
                 </div>
             `)}
             
-            ${todaySupervisions.length > 0 ? Components.card('👀 Pausenaufsicht heute', `
+            ${todaySupervisions.length > 0 ? Components.card('Pausenaufsicht heute', `
                 ${todaySupervisions.map(s => `
                     <div class="flex justify-between items-center mb-sm">
-                        <span>${s.break_type === 'grosse_pause' ? '☕ Große Pause' : '🍎 Kleine Pause'}</span>
-                        <span>📍 ${s.location || 'Schulhof'}</span>
+                        <span>${s.break_type === 'grosse_pause' ? 'Große Pause' : 'Kleine Pause'}</span>
+                        <span>${s.location || 'Schulhof'}</span>
                     </div>
                 `).join('')}
             `) : ''}
             
-            ${Components.card('📢 Neuigkeiten', Components.newsList(newsRes.news))}
+            ${Components.card('Neuigkeiten', Components.newsList(newsRes.news))}
         `;
     },
 
@@ -435,7 +434,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">📢</span> Neuigkeiten</h1>
+            <h1 class="page-title">Neuigkeiten</h1>
             ${newsContent}
         `);
     },
@@ -452,7 +451,7 @@ const App = {
         } catch (e) {}
 
         const content = `
-            <h1 class="page-title"><span class="icon">📝</span> Ankündigung erstellen</h1>
+            <h1 class="page-title">Ankündigung erstellen</h1>
             
             <div class="card">
                 <form onsubmit="App.handleCreateNews(event)">
@@ -474,9 +473,9 @@ const App = {
                     ${Components.formSelect('classId', 'Klasse (bei Klassenauswahl)', classesOptions)}
                     
                     ${Components.formSelect('priority', 'Priorität', [
-                        { value: 'normal', label: '🔵 Normal' },
-                        { value: 'important', label: '🟡 Wichtig' },
-                        { value: 'urgent', label: '🔴 Dringend' },
+                        { value: 'normal', label: 'Normal' },
+                        { value: 'important', label: 'Wichtig' },
+                        { value: 'urgent', label: 'Dringend' },
                     ])}
                     
                     <h3 class="mt-lg mb-md">Optional: Termin hinzufügen</h3>
@@ -485,7 +484,7 @@ const App = {
                     ${Components.formInput('eventLocation', 'Ort', 'text')}
                     
                     <button type="submit" class="btn btn-success btn-block mt-lg">
-                        ✅ Veröffentlichen
+                        Veröffentlichen
                     </button>
                 </form>
             </div>
@@ -510,10 +509,10 @@ const App = {
 
         try {
             await API.news.create(formData);
-            alert('✅ Ankündigung veröffentlicht!');
+            alert('Ankündigung veröffentlicht!');
             Router.navigate('/news');
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -541,7 +540,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">📅</span> Mein Stundenplan</h1>
+            <h1 class="page-title">Mein Stundenplan</h1>
             <div class="card">
                 ${timetableContent}
             </div>
@@ -577,7 +576,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">📅</span> Stundenplan ${classInfo}</h1>
+            <h1 class="page-title">Stundenplan ${classInfo}</h1>
             <div class="card">
                 ${timetableContent}
             </div>
@@ -599,7 +598,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">👧</span> Meine Kinder</h1>
+            <h1 class="page-title">Meine Kinder</h1>
             ${content}
         `);
     },
@@ -621,24 +620,24 @@ const App = {
                                 </div>
                                 ${e.description ? `<p>${e.description}</p>` : ''}
                                 <div class="news-event">
-                                    ${e.start_time ? `<span>⏰ ${e.start_time}</span>` : ''}
-                                    ${e.location ? `<span>📍 ${e.location}</span>` : ''}
-                                    ${e.class_name ? `<span>🎓 ${e.class_name}</span>` : ''}
+                                    ${e.start_time ? `<span>${e.start_time} Uhr</span>` : ''}
+                                    ${e.location ? `<span>${e.location}</span>` : ''}
+                                    ${e.class_name ? `<span>${e.class_name}</span>` : ''}
                                 </div>
-                                ${e.is_mandatory ? `<p class="text-warning mt-sm">⚠️ Anwesenheit erforderlich</p>` : ''}
+                                ${e.is_mandatory ? `<p class="text-warning mt-sm">Anwesenheit erforderlich</p>` : ''}
                             </div>
                         `).join('')}
                     </div>
                 `;
             } else {
-                content = Components.emptyState('📆', 'Keine Termine vorhanden');
+                content = Components.emptyState('', 'Keine Termine vorhanden');
             }
         } catch (error) {
             content = `<p class="text-error">Fehler: ${error.message}</p>`;
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">📆</span> Termine & Elternabende</h1>
+            <h1 class="page-title">Termine & Elternabende</h1>
             ${content}
         `);
     },
@@ -675,7 +674,7 @@ const App = {
                         </div>
                         
                         <button type="submit" class="btn btn-success btn-block mt-lg">
-                            ✅ Krankschreibung einreichen
+                            Krankschreibung einreichen
                         </button>
                     </form>
                 `;
@@ -700,7 +699,7 @@ const App = {
                     </div>
                     
                     <button type="submit" class="btn btn-success btn-block mt-lg">
-                        ✅ Krankmeldung einreichen
+                        Krankmeldung einreichen
                     </button>
                 </form>
             `;
@@ -711,7 +710,7 @@ const App = {
         try {
             const res = await API.sickNotes.getMy();
             if (res.sickNotes && res.sickNotes.length > 0) {
-                historyContent = Components.card('📋 Meine Krankmeldungen', `
+                historyContent = Components.card('Meine Krankmeldungen', `
                     ${res.sickNotes.map(sn => `
                         <div class="flex justify-between items-center mb-md" style="padding: 10px; background: #f5f5f5; border-radius: 8px;">
                             <div>
@@ -719,8 +718,8 @@ const App = {
                                 ${new Date(sn.start_date).toLocaleDateString('de-DE')} - ${new Date(sn.end_date).toLocaleDateString('de-DE')}
                             </div>
                             ${Components.badge(
-                                sn.status === 'approved' ? '✅ Bestätigt' : 
-                                sn.status === 'rejected' ? '❌ Abgelehnt' : '⏳ Ausstehend',
+                                sn.status === 'approved' ? 'Bestätigt' : 
+                                sn.status === 'rejected' ? 'Abgelehnt' : 'Ausstehend',
                                 sn.status
                             )}
                         </div>
@@ -730,11 +729,11 @@ const App = {
         } catch (e) {}
 
         this.render(`
-            <h1 class="page-title"><span class="icon">🏥</span> Krankschreibung</h1>
+            <h1 class="page-title">Krankschreibung</h1>
             
             <div class="card">
                 <p class="mb-lg text-muted">
-                    ℹ️ Hinweis: Die Angabe eines Grundes ist freiwillig und dient nur zur Information.
+                    Hinweis: Die Angabe eines Grundes ist freiwillig und dient nur zur Information.
                 </p>
                 ${formContent}
             </div>
@@ -759,10 +758,10 @@ const App = {
 
         try {
             await API.sickNotes.submitForStudent(formData);
-            alert('✅ Krankschreibung eingereicht!');
+            alert('Krankschreibung eingereicht!');
             this.renderSickNote();
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -781,10 +780,10 @@ const App = {
 
         try {
             await API.sickNotes.submitForTeacher(formData);
-            alert('✅ Krankmeldung eingereicht!');
+            alert('Krankmeldung eingereicht!');
             Router.navigate('/');
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -810,7 +809,7 @@ const App = {
                                 </div>
                             </div>
                             <a href="#/teacher/${t.id}/timetable" class="btn btn-secondary btn-block mt-md">
-                                📅 Stundenplan
+                                Stundenplan
                             </a>
                         </div>
                     `).join('')}
@@ -821,7 +820,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">👥</span> Kollegen</h1>
+            <h1 class="page-title">Kollegen</h1>
             ${content}
         `);
     },
@@ -837,7 +836,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">👀</span> Pausenaufsichten</h1>
+            <h1 class="page-title">Pausenaufsichten</h1>
             ${content}
         `);
     },
@@ -853,25 +852,25 @@ const App = {
                     <div class="flex flex-wrap gap-md">
                         ${res.classes.map(c => `
                             <div class="card" style="flex: 1; min-width: 250px;">
-                                <h3>🎓 Klasse ${c.name}</h3>
+                                <h3>Klasse ${c.name}</h3>
                                 <p class="text-muted">${c.subject || ''}</p>
                                 <div class="flex gap-sm mt-md">
-                                    <a href="#/timetable/${c.id}" class="btn btn-primary">📅 Stundenplan</a>
-                                    <a href="#/class/${c.id}/students" class="btn btn-secondary">👥 Schüler</a>
+                                    <a href="#/timetable/${c.id}" class="btn btn-primary">Stundenplan</a>
+                                    <a href="#/class/${c.id}/students" class="btn btn-secondary">Schüler</a>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 `;
             } else {
-                content = Components.emptyState('🎓', 'Keine Klassen zugewiesen');
+                content = Components.emptyState('', 'Keine Klassen zugewiesen');
             }
         } catch (error) {
             content = `<p class="text-error">Fehler: ${error.message}</p>`;
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">🎓</span> Meine Klassen</h1>
+            <h1 class="page-title">Meine Klassen</h1>
             ${content}
         `);
     },
@@ -890,22 +889,18 @@ const App = {
             content = `
                 <div class="flex flex-wrap gap-md mb-lg">
                     <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
-                        <div style="font-size: 40px;">📚</div>
                         <h2>${stats.users?.student || 0}</h2>
                         <p>Schüler</p>
                     </div>
                     <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
-                        <div style="font-size: 40px;">👨‍👩‍👧</div>
                         <h2>${stats.users?.parent || 0}</h2>
                         <p>Eltern</p>
                     </div>
                     <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
-                        <div style="font-size: 40px;">👨‍🏫</div>
                         <h2>${stats.users?.teacher || 0}</h2>
                         <p>Lehrer</p>
                     </div>
                     <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
-                        <div style="font-size: 40px;">🎓</div>
                         <h2>${stats.classes || 0}</h2>
                         <p>Klassen</p>
                     </div>
@@ -913,12 +908,12 @@ const App = {
                 
                 ${stats.pendingSickNotes > 0 ? `
                     <div class="card" style="background: #fff3e0; border-left: 4px solid #ff9800;">
-                        <h3>⚠️ ${stats.pendingSickNotes} offene Krankmeldungen</h3>
+                        <h3>${stats.pendingSickNotes} offene Krankmeldungen</h3>
                         <a href="#/admin/sick-notes" class="btn btn-primary mt-md">Jetzt bearbeiten</a>
                     </div>
                 ` : ''}
                 
-                ${stats.recentNews && stats.recentNews.length > 0 ? Components.card('📢 Letzte Ankündigungen', `
+                ${stats.recentNews && stats.recentNews.length > 0 ? Components.card('Letzte Ankündigungen', `
                     ${stats.recentNews.map(n => `
                         <div class="mb-sm">
                             <strong>${n.title}</strong>
@@ -932,7 +927,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">⚙️</span> Admin Dashboard</h1>
+            <h1 class="page-title">Admin Dashboard</h1>
             ${content}
         `);
     },
@@ -949,15 +944,15 @@ const App = {
                 `${u.first_name} ${u.last_name}`,
                 u.email,
                 Auth.getRoleDisplayName(u.role),
-                u.is_active ? '✅ Aktiv' : '❌ Inaktiv',
-                `<button class="btn btn-secondary" onclick="App.editUser('${u.id}')">✏️</button>`
+                u.is_active ? 'Aktiv' : 'Inaktiv',
+                `<button class="btn btn-secondary" onclick="App.editUser('${u.id}')">Bearbeiten</button>`
             ]);
 
             content = `
                 <div class="flex justify-between items-center mb-lg">
                     <div></div>
                     <button class="btn btn-success" onclick="App.showCreateUserModal()">
-                        ➕ Neuer Benutzer
+                        Neuer Benutzer
                     </button>
                 </div>
                 ${Components.table(headers, rows, 'Keine Benutzer gefunden')}
@@ -967,7 +962,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">👥</span> Benutzer verwalten</h1>
+            <h1 class="page-title">Benutzer verwalten</h1>
             <div class="card">
                 ${content}
             </div>
@@ -986,7 +981,7 @@ const App = {
                 `${c.grade_level}. Klasse`,
                 c.class_teacher_name || '-',
                 c.student_count || 0,
-                `<a href="#/timetable/${c.id}" class="btn btn-secondary">📅</a>`
+                `<a href="#/timetable/${c.id}" class="btn btn-secondary">Stundenplan</a>`
             ]);
 
             content = Components.table(headers, rows, 'Keine Klassen gefunden');
@@ -995,7 +990,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">🎓</span> Klassen verwalten</h1>
+            <h1 class="page-title">Klassen verwalten</h1>
             <div class="card">
                 ${content}
             </div>
@@ -1018,9 +1013,9 @@ const App = {
                 <div class="flex flex-wrap gap-md">
                     ${(classesRes.classes || []).map(c => `
                         <div class="card" style="flex: 1; min-width: 200px;">
-                            <h3>🎓 ${c.name}</h3>
+                            <h3>${c.name}</h3>
                             <a href="#/admin/timetable/${c.id}" class="btn btn-primary btn-block mt-md">
-                                ✏️ Bearbeiten
+                                Bearbeiten
                             </a>
                         </div>
                     `).join('')}
@@ -1031,7 +1026,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">📅</span> Stundenpläne verwalten</h1>
+            <h1 class="page-title">Stundenpläne verwalten</h1>
             ${content}
         `);
     },
@@ -1115,7 +1110,7 @@ const App = {
 
             content = `
                 <div class="flex" style="justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <h1 class="page-title" style="margin:0;"><span class="icon">📅</span> Stundenplan ${className}</h1>
+                    <h1 class="page-title" style="margin:0;">Stundenplan ${className}</h1>
                     <a href="#/admin/timetable" class="btn btn-secondary">← Zurück</a>
                 </div>
                 <p class="text-muted mt-sm mb-lg">Klicke auf eine Zelle um eine Stunde hinzuzufügen oder zu bearbeiten.</p>
@@ -1135,21 +1130,21 @@ const App = {
                             <input type="hidden" id="tt-entry-day">
                             <input type="hidden" id="tt-entry-lesson">
                             <div class="form-group">
-                                <label class="form-label">📚 Fach</label>
+                                <label class="form-label">Fach</label>
                                 <select id="tt-subject" class="form-input" required>
                                     <option value="">-- Fach wählen --</option>
                                     ${subjectOptions}
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">👨‍🏫 Lehrer</label>
+                                <label class="form-label">Lehrer</label>
                                 <select id="tt-teacher" class="form-input">
                                     <option value="">-- Lehrer wählen --</option>
                                     ${teacherOptions}
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">🚪 Raum</label>
+                                <label class="form-label">Raum</label>
                                 <select id="tt-room" class="form-input">
                                     <option value="">-- Raum wählen --</option>
                                     ${roomOptions}
@@ -1157,20 +1152,20 @@ const App = {
                             </div>
                             <div class="flex gap-sm" style="flex-wrap:wrap;">
                                 <div class="form-group" style="flex:1;">
-                                    <label class="form-label">⏰ Von</label>
+                                    <label class="form-label">Von</label>
                                     <input type="time" id="tt-start" class="form-input" required>
                                 </div>
                                 <div class="form-group" style="flex:1;">
-                                    <label class="form-label">⏰ Bis</label>
+                                    <label class="form-label">Bis</label>
                                     <input type="time" id="tt-end" class="form-input" required>
                                 </div>
                             </div>
                             <div class="flex gap-sm mt-md">
-                                <button type="submit" class="btn btn-primary" style="flex:1;">💾 Speichern</button>
+                                <button type="submit" class="btn btn-primary" style="flex:1;">Speichern</button>
                                 <button type="button" class="btn btn-secondary" onclick="App.closeTTModal()" style="flex:1;">Abbrechen</button>
                             </div>
                             <button type="button" class="btn btn-danger btn-block mt-md" id="tt-delete-btn" style="display:none;" onclick="App.deleteTimetableEntry()">
-                                🗑️ Stunde löschen
+                                Stunde löschen
                             </button>
                         </form>
                     </div>
@@ -1261,7 +1256,7 @@ const App = {
             this.closeTTModal();
             this.renderAdminTimetableEdit(this.timetableEditData.classId);
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -1275,7 +1270,7 @@ const App = {
             this.closeTTModal();
             this.renderAdminTimetableEdit(this.timetableEditData.classId);
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -1288,17 +1283,17 @@ const App = {
             const headers = ['Person', 'Typ', 'Zeitraum', 'Eingereicht von', 'Status', 'Aktionen'];
             const rows = (res.sickNotes || []).map(sn => [
                 sn.person_name,
-                sn.person_type === 'student' ? '📚 Schüler' : '👨‍🏫 Lehrer',
+                sn.person_type === 'student' ? 'Schüler' : 'Lehrer',
                 `${new Date(sn.start_date).toLocaleDateString('de-DE')} - ${new Date(sn.end_date).toLocaleDateString('de-DE')}`,
                 sn.submitted_by_name,
                 Components.badge(
-                    sn.status === 'approved' ? '✅ Bestätigt' : 
-                    sn.status === 'rejected' ? '❌ Abgelehnt' : '⏳ Ausstehend',
+                    sn.status === 'approved' ? 'Bestätigt' : 
+                    sn.status === 'rejected' ? 'Abgelehnt' : 'Ausstehend',
                     sn.status
                 ),
                 sn.status === 'pending' ? `
-                    <button class="btn btn-success" onclick="App.reviewSickNote('${sn.id}', 'approved')">✅</button>
-                    <button class="btn btn-secondary" onclick="App.reviewSickNote('${sn.id}', 'rejected')">❌</button>
+                    <button class="btn btn-success" onclick="App.reviewSickNote('${sn.id}', 'approved')">Bestätigen</button>
+                    <button class="btn btn-secondary" onclick="App.reviewSickNote('${sn.id}', 'rejected')">Ablehnen</button>
                 ` : (sn.reviewed_by_name ? `Bearbeitet von ${sn.reviewed_by_name}` : '')
             ]);
 
@@ -1308,7 +1303,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">🏥</span> Krankmeldungen</h1>
+            <h1 class="page-title">Krankmeldungen</h1>
             <div class="card">
                 ${content}
             </div>
@@ -1320,10 +1315,10 @@ const App = {
 
         try {
             await API.sickNotes.review(id, status);
-            alert('✅ Status aktualisiert!');
+            alert('Status aktualisiert!');
             this.renderAdminSickNotes();
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -1348,7 +1343,7 @@ const App = {
         }
 
         this.render(`
-            <h1 class="page-title"><span class="icon">📚</span> Unterrichtsinhalte</h1>
+            <h1 class="page-title">Unterrichtsinhalte</h1>
             <div class="card">
                 ${content}
             </div>
@@ -1365,7 +1360,7 @@ const App = {
         const allowedEmojis = ['😊', '😄', '🌟', '🦊', '🐰', '🦁', '🐶', '🐱', '🦄', '🌈', '⭐', '🎨', '📚', '⚽', '🎵'];
 
         const content = `
-            <h1 class="page-title"><span class="icon">⚙️</span> Mein Profil</h1>
+            <h1 class="page-title">Mein Profil</h1>
             
             <div class="card">
                 <div class="text-center mb-lg">
@@ -1392,20 +1387,20 @@ const App = {
                     <input type="hidden" id="avatarEmoji" value="${user.avatar || '😊'}">
                     
                     <button type="submit" class="btn btn-success btn-block mt-lg">
-                        💾 Speichern
+                        Speichern
                     </button>
                 </form>
             </div>
             
             <div class="card mt-lg">
-                <h3 class="mb-md">🔒 Passwort ändern</h3>
+                <h3 class="mb-md">Passwort ändern</h3>
                 <form onsubmit="App.changePassword(event)">
                     ${Components.formInput('currentPassword', 'Aktuelles Passwort', 'password', true)}
                     ${Components.formInput('newPassword', 'Neues Passwort', 'password', true)}
                     ${Components.formInput('confirmPassword', 'Passwort bestätigen', 'password', true)}
                     
                     <button type="submit" class="btn btn-primary btn-block mt-lg">
-                        🔐 Passwort ändern
+                        Passwort ändern
                     </button>
                 </form>
             </div>
@@ -1443,10 +1438,10 @@ const App = {
             await API.users.updateProfile(data);
             // Session neu laden
             await Auth.checkSession();
-            alert('✅ Profil aktualisiert!');
+            alert('Profil aktualisiert!');
             this.renderProfile();
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -1458,23 +1453,23 @@ const App = {
         const confirmPassword = document.getElementById('confirmPassword').value;
 
         if (newPassword !== confirmPassword) {
-            alert('❌ Die Passwörter stimmen nicht überein!');
+            alert('Die Passwörter stimmen nicht überein!');
             return;
         }
 
         if (newPassword.length < 8) {
-            alert('❌ Das Passwort muss mindestens 8 Zeichen lang sein!');
+            alert('Das Passwort muss mindestens 8 Zeichen lang sein!');
             return;
         }
 
         try {
             await API.auth.changePassword(currentPassword, newPassword);
-            alert('✅ Passwort erfolgreich geändert!');
+            alert('Passwort erfolgreich geändert!');
             document.getElementById('currentPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 
@@ -1507,10 +1502,10 @@ const App = {
     async createUser(data) {
         try {
             await API.admin.createUser(data);
-            alert('✅ Benutzer erstellt!');
+            alert('Benutzer erstellt!');
             this.renderAdminUsers();
         } catch (error) {
-            alert('❌ Fehler: ' + error.message);
+            alert('Fehler: ' + error.message);
         }
     },
 

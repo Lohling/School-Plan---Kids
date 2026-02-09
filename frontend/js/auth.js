@@ -93,11 +93,11 @@ const Auth = {
     getRoleEmoji(role = null) {
         const r = role || this.getRole();
         const emojis = {
-            student: '📚',
-            parent: '👨‍👩‍👧',
-            teacher: '👨‍🏫',
-            admin: '⚙️',
+            student: '',
+            parent: '',
+            teacher: '',
+            admin: '',
         };
-        return emojis[r] || '👤';
+        return emojis[r] || '';
     },
 };

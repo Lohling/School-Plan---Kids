@@ -299,7 +299,7 @@ INSERT INTO schools (id, name, address, email) VALUES
 
 -- Beispiel-Admin (Passwort: "test1234" - bcrypt hash)
 INSERT INTO users (school_id, email, password_hash, first_name, last_name, role, avatar_emoji) 
-SELECT id, 'admin@schule.de', '$2b$10$YFnVBRywMaUWKjHOo1gMg.Zt5r80U5RBqOP3LVnsVGNSdnDiqXDKe', 'Admin', 'Schulleitung', 'admin', '👨‍💼'
+SELECT id, 'admin@schule.de', '$2b$10$Sl1Cy2jUr4hIb6gYJ7tb4uCMvmFPJMAQlfXdNqFoL.t2ku5Vo5Jpu', 'Admin', 'Schulleitung', 'admin', '👨‍💼'
 FROM schools LIMIT 1;
 
 -- Beispiel-Fächer

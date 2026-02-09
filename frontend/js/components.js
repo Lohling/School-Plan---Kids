@@ -15,7 +15,6 @@ const Components = {
             <header class="header">
                 <div class="menu-icon" onclick="App.toggleNav()">☰</div>
                 <div class="header-logo">
-                    <span class="emoji">🏫</span>
                     <span class="header-title">School Plan - <span class="highlight">Kids</span></span>
                 </div>
                 <div class="header-spacer"></div>
@@ -61,7 +60,7 @@ const Components = {
                 </div>
                 <div class="nav-footer">
                     <button class="logout-btn" onclick="App.logout()">
-                        <span>🚪</span> Abmelden
+                        Abmelden
                     </button>
                 </div>
             </nav>
@@ -76,42 +75,42 @@ const Components = {
         const items = [];
 
         // Gemeinsame Items
-        items.push({ path: '/', icon: '🏠', label: 'Startseite' });
+        items.push({ path: '/', icon: '', label: 'Startseite' });
 
         switch (role) {
             case 'student':
-                items.push({ path: '/timetable', icon: '📅', label: 'Mein Stundenplan' });
-                items.push({ path: '/news', icon: '📢', label: 'Neuigkeiten' });
+                items.push({ path: '/timetable', icon: '', label: 'Mein Stundenplan' });
+                items.push({ path: '/news', icon: '', label: 'Neuigkeiten' });
                 break;
 
             case 'parent':
-                items.push({ path: '/children', icon: '👧', label: 'Meine Kinder' });
-                items.push({ path: '/news', icon: '📢', label: 'Neuigkeiten' });
-                items.push({ path: '/events', icon: '📆', label: 'Termine' });
-                items.push({ path: '/sick-note', icon: '🏥', label: 'Krankschreibung' });
+                items.push({ path: '/children', icon: '', label: 'Meine Kinder' });
+                items.push({ path: '/news', icon: '', label: 'Neuigkeiten' });
+                items.push({ path: '/events', icon: '', label: 'Termine' });
+                items.push({ path: '/sick-note', icon: '', label: 'Krankschreibung' });
                 break;
 
             case 'teacher':
-                items.push({ path: '/timetable', icon: '📅', label: 'Mein Stundenplan' });
-                items.push({ path: '/colleagues', icon: '👥', label: 'Kollegen-Pläne' });
-                items.push({ path: '/supervisions', icon: '👀', label: 'Pausenaufsichten' });
-                items.push({ path: '/classes', icon: '🎓', label: 'Meine Klassen' });
-                items.push({ path: '/news/create', icon: '📝', label: 'Ankündigung' });
-                items.push({ path: '/sick-note', icon: '🏥', label: 'Krankschreibung' });
+                items.push({ path: '/timetable', icon: '', label: 'Mein Stundenplan' });
+                items.push({ path: '/colleagues', icon: '', label: 'Kollegen-Pläne' });
+                items.push({ path: '/supervisions', icon: '', label: 'Pausenaufsichten' });
+                items.push({ path: '/classes', icon: '', label: 'Meine Klassen' });
+                items.push({ path: '/news/create', icon: '', label: 'Ankündigung' });
+                items.push({ path: '/sick-note', icon: '', label: 'Krankschreibung' });
                 break;
 
             case 'admin':
-                items.push({ path: '/admin', icon: '⚙️', label: 'Dashboard' });
-                items.push({ path: '/admin/users', icon: '👥', label: 'Benutzer' });
-                items.push({ path: '/admin/classes', icon: '🎓', label: 'Klassen' });
-                items.push({ path: '/admin/timetable', icon: '📅', label: 'Stundenpläne' });
-                items.push({ path: '/admin/sick-notes', icon: '🏥', label: 'Krankmeldungen' });
-                items.push({ path: '/admin/contents', icon: '📚', label: 'Unterrichtsinhalte' });
-                items.push({ path: '/news/create', icon: '📝', label: 'Ankündigung' });
+                items.push({ path: '/admin', icon: '', label: 'Dashboard' });
+                items.push({ path: '/admin/users', icon: '', label: 'Benutzer' });
+                items.push({ path: '/admin/classes', icon: '', label: 'Klassen' });
+                items.push({ path: '/admin/timetable', icon: '', label: 'Stundenpläne' });
+                items.push({ path: '/admin/sick-notes', icon: '', label: 'Krankmeldungen' });
+                items.push({ path: '/admin/contents', icon: '', label: 'Unterrichtsinhalte' });
+                items.push({ path: '/news/create', icon: '', label: 'Ankündigung' });
                 break;
         }
 
-        items.push({ path: '/profile', icon: '⚙️', label: 'Profil' });
+        items.push({ path: '/profile', icon: '', label: 'Profil' });
 
         return items;
     },
@@ -139,7 +138,7 @@ const Components = {
      */
     timetable(entries = []) {
         if (!entries || entries.length === 0) {
-            return this.emptyState('📅', 'Keine Stunden für diesen Tag');
+            return this.emptyState('', 'Keine Stunden für diesen Tag');
         }
 
         return `
@@ -158,7 +157,7 @@ const Components = {
                 <div class="lesson-row">
                     <div class="lesson-time">Pause</div>
                     <div class="lesson-block break">
-                        <span>☕ ${entry.subject || 'Pause'}</span>
+                        <span>${entry.subject || 'Pause'}</span>
                     </div>
                 </div>
             `;
@@ -176,10 +175,10 @@ const Components = {
                         ${entry.icon || ''} ${entry.subject}
                     </div>
                     <div class="lesson-details">
-                        ${entry.teacher ? `👨‍🏫 ${entry.teacher}` : ''} 
-                        ${entry.room ? `• 🚪 ${entry.room}` : ''}
+                        ${entry.teacher ? entry.teacher : ''} 
+                        ${entry.room ? `· ${entry.room}` : ''}
                     </div>
-                    ${entry.className ? `<div class="lesson-details">🎓 ${entry.className}</div>` : ''}
+                    ${entry.className ? `<div class="lesson-details">${entry.className}</div>` : ''}
                 </div>
             </div>
         `;
@@ -208,7 +207,7 @@ const Components = {
      */
     newsList(news = []) {
         if (!news || news.length === 0) {
-            return this.emptyState('📢', 'Keine Neuigkeiten vorhanden');
+            return this.emptyState('', 'Keine Neuigkeiten vorhanden');
         }
 
         return `
@@ -234,13 +233,12 @@ const Components = {
                 <div class="news-content">${(item.content || '').replace(/\\n/g, '<br>')}</div>
                 ${item.event_date ? `
                     <div class="news-event">
-                        <span>📆</span>
                         <span>${new Date(item.event_date).toLocaleDateString('de-DE')}</span>
-                        ${item.event_time ? `<span>⏰ ${item.event_time}</span>` : ''}
-                        ${item.event_location ? `<span>📍 ${item.event_location}</span>` : ''}
+                        ${item.event_time ? `<span>${item.event_time} Uhr</span>` : ''}
+                        ${item.event_location ? `<span>${item.event_location}</span>` : ''}
                     </div>
                 ` : ''}
-                ${item.class_name ? `<div class="text-muted mt-sm">🎓 ${item.class_name}</div>` : ''}
+                ${item.class_name ? `<div class="text-muted mt-sm">${item.class_name}</div>` : ''}
             </div>
         `;
     },
@@ -335,7 +333,7 @@ const Components = {
      */
     table(headers, rows, emptyMessage = 'Keine Daten vorhanden') {
         if (!rows || rows.length === 0) {
-            return this.emptyState('📋', emptyMessage);
+            return this.emptyState('', emptyMessage);
         }
 
         return `
@@ -368,7 +366,7 @@ const Components = {
      */
     childrenCards(children = []) {
         if (!children || children.length === 0) {
-            return this.emptyState('👧', 'Keine Kinder zugeordnet');
+            return this.emptyState('', 'Keine Kinder zugeordnet');
         }
 
         return `
@@ -383,7 +381,7 @@ const Components = {
                             </div>
                         </div>
                         <a href="#/timetable/${child.class_id}" class="btn btn-primary btn-block">
-                            📅 Stundenplan ansehen
+                            Stundenplan ansehen
                         </a>
                     </div>
                 `).join('')}
@@ -396,7 +394,7 @@ const Components = {
      */
     supervisionsList(supervisions = []) {
         if (!supervisions || supervisions.length === 0) {
-            return this.emptyState('👀', 'Keine Pausenaufsichten eingetragen');
+            return this.emptyState('', 'Keine Pausenaufsichten eingetragen');
         }
 
         const grouped = {};
@@ -410,7 +408,7 @@ const Components = {
                 <h3>${this.getDayName(day)}</h3>
                 ${items.map(s => `
                     <div class="flex justify-between items-center mb-sm">
-                        <span>${s.break_type === 'grosse_pause' ? '☕ Große Pause' : '🍎 Kleine Pause'}</span>
+                        <span>${s.break_type === 'grosse_pause' ? 'Große Pause' : 'Kleine Pause'}</span>
                         <span>${s.teacher_name}</span>
                         <span class="text-muted">${s.location || ''}</span>
                     </div>
