@@ -152,11 +152,27 @@ const Components = {
      */
     lessonRow(entry) {
         if (entry.type === 'break') {
+            const supervisions = entry.supervisions || [];
+            const isSelf = entry.isSelfSupervision;
+
             return `
-                <div class="lesson-row">
+                <div class="lesson-row fade-in">
                     <div class="lesson-time">Pause</div>
-                    <div class="lesson-block break">
-                        <span>${entry.subject || 'Pause'}</span>
+                    <div class="lesson-block break ${isSelf ? 'self-supervision' : ''}">
+                        <div class="break-content">
+                            <span class="break-label">${entry.subject || 'Pause'}</span>
+                            ${isSelf ? '<span class="supervision-badge">Aufsicht</span>' : ''}
+                        </div>
+                        ${supervisions.length > 0 ? `
+                            <div class="supervision-list">
+                                ${supervisions.map(s => `
+                                    <div class="supervision-entry ${s.isSelf ? 'is-self' : ''}">
+                                        <span class="supervision-name">${s.teacherName}</span>
+                                        <span class="supervision-location">${s.location || ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;

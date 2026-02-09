@@ -376,15 +376,13 @@ const App = {
 
     async getTeacherDashboard() {
         this.selectedClassId = null;
-        const [timetableRes, supervisionsRes, newsRes] = await Promise.all([
+        const [timetableRes, newsRes] = await Promise.all([
             API.timetable.getMy().catch(() => ({ timetable: {} })),
-            API.timetable.getSupervisions(Auth.getUser().id).catch(() => ({ supervisions: [] })),
             API.news.getAll(null, 1).catch(() => ({ news: [] }))
         ]);
 
         const today = this.getTodayWeekday();
         const todayLessons = timetableRes.timetable[today] || [];
-        const todaySupervisions = (supervisionsRes.supervisions || []).filter(s => s.weekday === today);
 
         return `
             ${Components.card('Mein Stundenplan heute', `
@@ -393,15 +391,6 @@ const App = {
                     ${Components.timetable(todayLessons)}
                 </div>
             `)}
-            
-            ${todaySupervisions.length > 0 ? Components.card('Pausenaufsicht heute', `
-                ${todaySupervisions.map(s => `
-                    <div class="flex justify-between items-center mb-sm">
-                        <span>${s.break_type === 'grosse_pause' ? 'Große Pause' : 'Kleine Pause'}</span>
-                        <span>${s.location || 'Schulhof'}</span>
-                    </div>
-                `).join('')}
-            `) : ''}
             
             ${Components.latestNewsBanner(newsRes.news)}
         `;

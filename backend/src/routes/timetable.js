@@ -183,20 +183,40 @@ router.get('/my', authenticate, async (req, res) => {
         } 
         
         if (role === 'teacher') {
-            // Lehrer: Eigenen Stundenplan
-            const entries = await getMany(`
-                SELECT 
-                    te.id, te.weekday, te.lesson_number, te.start_time, te.end_time, te.entry_type,
-                    s.name as subject_name, s.short_name, s.color, s.icon,
-                    r.name as room_name,
-                    c.name as class_name
-                FROM timetable_entries te
-                LEFT JOIN subjects s ON te.subject_id = s.id
-                LEFT JOIN rooms r ON te.room_id = r.id
-                LEFT JOIN classes c ON te.class_id = c.id
-                WHERE te.teacher_id = $1
-                ORDER BY te.weekday, te.start_time
-            `, [id]);
+            // Lehrer: Eigenen Stundenplan + Pausen mit Aufsichten
+            const [entries, breakEntries, supervisions] = await Promise.all([
+                getMany(`
+                    SELECT 
+                        te.id, te.weekday, te.lesson_number, te.start_time, te.end_time, te.entry_type,
+                        s.name as subject_name, s.short_name, s.color, s.icon,
+                        r.name as room_name,
+                        c.name as class_name
+                    FROM timetable_entries te
+                    LEFT JOIN subjects s ON te.subject_id = s.id
+                    LEFT JOIN rooms r ON te.room_id = r.id
+                    LEFT JOIN classes c ON te.class_id = c.id
+                    WHERE te.teacher_id = $1
+                    ORDER BY te.weekday, te.start_time
+                `, [id]),
+                // Pausen aus irgendeiner Klasse der Schule holen (sind universell)
+                getMany(`
+                    SELECT DISTINCT ON (te.weekday, te.start_time)
+                        te.weekday, te.lesson_number, te.start_time, te.end_time, te.entry_type
+                    FROM timetable_entries te
+                    JOIN classes c ON te.class_id = c.id
+                    WHERE te.entry_type = 'break' AND c.school_id = $1
+                    ORDER BY te.weekday, te.start_time
+                `, [req.user.school_id]),
+                // Alle Pausenaufsichten der Schule
+                getMany(`
+                    SELECT bs.*, u.first_name || ' ' || u.last_name as teacher_name,
+                           bs.teacher_id
+                    FROM break_supervisions bs
+                    JOIN users u ON bs.teacher_id = u.id
+                    WHERE bs.school_id = $1
+                    ORDER BY bs.weekday, bs.start_time
+                `, [req.user.school_id])
+            ]);
 
             const timetable = {};
             entries.forEach(entry => {
@@ -215,6 +235,42 @@ router.get('/my', authenticate, async (req, res) => {
                     icon: entry.icon,
                     room: entry.room_name,
                     className: entry.class_name,
+                });
+            });
+
+            // Pausen mit Aufsicht-Info einfügen
+            breakEntries.forEach(brk => {
+                if (!timetable[brk.weekday]) {
+                    timetable[brk.weekday] = [];
+                }
+                // Aufsichten für diese Pause finden
+                const breakSupervisions = supervisions.filter(s => 
+                    s.weekday === brk.weekday && s.start_time === brk.start_time
+                );
+                const isSelfSupervision = breakSupervisions.some(s => s.teacher_id === id);
+
+                timetable[brk.weekday].push({
+                    lessonNumber: brk.lesson_number,
+                    startTime: brk.start_time,
+                    endTime: brk.end_time,
+                    type: 'break',
+                    subject: 'Pause',
+                    supervisions: breakSupervisions.map(s => ({
+                        teacherName: s.teacher_name,
+                        location: s.location,
+                        breakType: s.break_type,
+                        isSelf: s.teacher_id === id
+                    })),
+                    isSelfSupervision
+                });
+            });
+
+            // Einträge pro Tag nach Startzeit sortieren
+            Object.keys(timetable).forEach(day => {
+                timetable[day].sort((a, b) => {
+                    if (a.startTime < b.startTime) return -1;
+                    if (a.startTime > b.startTime) return 1;
+                    return 0;
                 });
             });
 
