@@ -11,9 +11,15 @@ const Components = {
         const user = Auth.getUser();
         if (!user) return '';
 
+        const currentPath = Router.getCurrentPath();
+        const isSubpage = currentPath !== '/' && currentPath !== '/admin';
+
         return `
             <header class="header">
-                <div class="menu-icon" onclick="App.toggleNav()">☰</div>
+                ${isSubpage 
+                    ? `<div class="back-btn" onclick="window.history.back()">&#8592;</div>`
+                    : `<div class="menu-icon" onclick="App.toggleNav()">☰</div>`
+                }
                 <div class="header-logo">
                     <span class="header-title">School Plan - <span class="highlight">Kids</span></span>
                 </div>
