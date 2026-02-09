@@ -147,6 +147,20 @@ const App = {
         overlay.classList.remove('visible');
     },
 
+    openNewsModal() {
+        const modal = document.getElementById('news-modal');
+        const handle = document.getElementById('news-handle');
+        if (modal) modal.classList.add('visible');
+        if (handle) handle.style.display = 'none';
+    },
+
+    closeNewsModal() {
+        const modal = document.getElementById('news-modal');
+        const handle = document.getElementById('news-handle');
+        if (modal) modal.classList.remove('visible');
+        if (handle) handle.style.display = '';
+    },
+
     openModal(id) {
         const modal = document.getElementById(`${id}-overlay`);
         if (modal) {

@@ -201,20 +201,6 @@ input, select, textarea {
     background-color: var(--bg-light-gray);
 }
 
-.back-btn {
-    font-size: 24px;
-    cursor: pointer;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-sm);
-    transition: background-color 0.2s;
-    font-weight: 600;
-    color: var(--text-dark);
-}
-
-.back-btn:hover {
-    background-color: var(--bg-light-gray);
-}
-
 /* =====================================================
    NAVIGATION
    ===================================================== */
@@ -566,6 +552,7 @@ input, select, textarea {
 
 .main-content {
     padding: var(--spacing-lg);
+    padding-bottom: 80px;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -792,58 +779,114 @@ input, select, textarea {
 }
 
 /* =====================================================
-   LATEST NEWS BANNER (Startseite)
+   NEWS HANDLE & MODAL (Bottom Pop-up)
    ===================================================== */
 
-.latest-news-banner {
-    margin-top: var(--spacing-lg);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--radius-lg);
-    border-left: 4px solid var(--primary-red);
+.news-handle {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--primary-red);
+    color: white;
+    padding: 18px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 17px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    z-index: 10;
+    transition: background-color 0.2s;
+}
+
+.news-handle:hover {
+    background-color: #c62828;
+}
+
+.news-handle.important {
+    background-color: var(--color-warning);
+    color: var(--text-dark);
+}
+
+.news-handle.urgent {
+    background-color: var(--color-error);
+    animation: pulse-handle 2s infinite;
+}
+
+@keyframes pulse-handle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.news-modal {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     background-color: var(--bg-white);
-    box-shadow: 0 2px 8px var(--shadow-light);
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    padding: 24px;
+    transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    z-index: 20;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
-.latest-news-banner.important {
-    border-left-color: var(--color-warning);
-    background-color: #fffde7;
+.news-modal.visible {
+    transform: translateY(0);
 }
 
-.latest-news-banner.urgent {
-    border-left-color: var(--color-error);
-    background-color: #ffebee;
-}
-
-.latest-news-header {
+.news-modal .close-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background-color: var(--primary-red);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
+}
+
+.news-modal .close-button:hover {
+    background-color: #c62828;
+}
+
+.news-modal .achtung-header {
+    color: var(--primary-red);
+    font-size: 28px;
+    font-weight: 900;
     margin-bottom: var(--spacing-xs);
 }
 
-.latest-news-label {
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    color: var(--primary-red);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.latest-news-date {
+.news-date-modal {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
 }
 
-.latest-news-title {
+.news-text-modal {
+    font-size: var(--font-size-lg);
     font-weight: 700;
-    font-size: var(--font-size-md);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
 }
 
-.latest-news-content {
+.news-content-modal {
     color: var(--text-dark);
-    line-height: 1.5;
+    line-height: 1.6;
     font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-md);
 }
 
 .latest-news-link {

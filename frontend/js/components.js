@@ -11,15 +11,9 @@ const Components = {
         const user = Auth.getUser();
         if (!user) return '';
 
-        const currentPath = Router.getCurrentPath();
-        const isSubpage = currentPath !== '/' && currentPath !== '/admin';
-
         return `
             <header class="header">
-                ${isSubpage 
-                    ? `<div class="back-btn" onclick="window.history.back()">&#8592;</div>`
-                    : `<div class="menu-icon" onclick="App.toggleNav()">☰</div>`
-                }
+                <div class="menu-icon" onclick="App.toggleNav()">☰</div>
                 <div class="header-logo">
                     <span class="header-title">School Plan - <span class="highlight">Kids</span></span>
                 </div>
@@ -230,18 +224,22 @@ const Components = {
         if (!news || news.length === 0) return '';
 
         const latest = news[0];
-        const priorityClass = latest.priority || 'normal';
+        const priorityClass = latest.priority === 'urgent' ? 'urgent' : (latest.priority === 'important' ? 'important' : '');
         const date = new Date(latest.published_at || latest.created_at).toLocaleDateString('de-DE');
 
         return `
-            <div class="latest-news-banner ${priorityClass}">
-                <div class="latest-news-header">
-                    <span class="latest-news-label">Neueste Mitteilung</span>
-                    <span class="latest-news-date">${date}</span>
+            <div id="news-handle" class="news-handle ${priorityClass}" onclick="App.openNewsModal()">
+                Wichtige Mitteilung (Klicken)
+            </div>
+            <div id="news-modal" class="news-modal">
+                <div class="modal-content">
+                    <button class="close-button" onclick="App.closeNewsModal()">X</button>
+                    <h2 class="achtung-header">Neueste Mitteilung</h2>
+                    <p class="news-date-modal">${date}</p>
+                    <p class="news-text-modal">${latest.title}</p>
+                    <p class="news-content-modal">${(latest.content || '').replace(/\\n/g, '<br>')}</p>
+                    <a href="#/news" class="latest-news-link" onclick="App.closeNewsModal()">Alle Neuigkeiten ansehen &rarr;</a>
                 </div>
-                <div class="latest-news-title">${latest.title}</div>
-                <div class="latest-news-content">${(latest.content || '').replace(/\\n/g, '<br>')}</div>
-                <a href="#/news" class="latest-news-link">Alle Neuigkeiten ansehen &rarr;</a>
             </div>
         `;
     },
