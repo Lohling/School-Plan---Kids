@@ -73,7 +73,7 @@ router.get('/children', authenticate, async (req, res) => {
         }
 
         const children = await getMany(
-            `SELECT u.id, u.first_name, u.last_name, u.avatar_emoji,
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.avatar_emoji,
                     c.id as class_id, c.name as class_name, c.grade_level
              FROM parent_students ps
              JOIN users u ON ps.student_id = u.id

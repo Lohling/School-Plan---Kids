@@ -406,7 +406,22 @@ const Components = {
                                 <p class="text-muted">Klasse ${child.class_name || '-'}</p>
                             </div>
                         </div>
-                        <a href="#/timetable/${child.class_id}" class="btn btn-primary btn-block">
+                        <div class="child-login-info">
+                            <div class="child-login-toggle" onclick="this.parentElement.classList.toggle('open')">
+                                Zugangsdaten anzeigen
+                            </div>
+                            <div class="child-login-details">
+                                <div class="child-login-row">
+                                    <span class="child-login-label">E-Mail:</span>
+                                    <span class="child-login-value">${child.email || '-'}</span>
+                                </div>
+                                <div class="child-login-row">
+                                    <span class="child-login-label">Passwort:</span>
+                                    <span class="child-login-value">test1234</span>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#/timetable/${child.class_id}" class="btn btn-primary btn-block mt-md">
                             Stundenplan ansehen
                         </a>
                     </div>
