@@ -837,6 +837,57 @@ input, select, textarea {
     background-color: var(--color-error);
 }
 
+/* Admin Stat Cards */
+.stat-card {
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px var(--shadow-medium);
+}
+
+.stat-card:active {
+    transform: translateY(0);
+}
+
+.stat-card h2 {
+    font-size: 36px;
+    color: var(--primary-red);
+}
+
+/* Role Filter Tabs */
+.role-filter-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    overflow-x: auto;
+    padding-bottom: var(--spacing-xs);
+}
+
+.role-filter-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid var(--bg-light-gray);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-white);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    color: var(--text-dark);
+}
+
+.role-filter-btn:hover {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+.role-filter-btn.active {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+    color: white;
+}
+
 .lesson-badge {
     position: absolute;
     top: -8px;
@@ -1456,6 +1507,198 @@ input, select, textarea {
 
 .pulse {
     animation: pulse 2s ease-in-out infinite;
+}
+
+/* =====================================================
+   ADMIN DETAIL CARDS (Expandable)
+   ===================================================== */
+
+.admin-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.admin-detail-card {
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.admin-detail-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: background 0.2s;
+    gap: var(--spacing-md);
+}
+
+.admin-detail-summary:hover {
+    background: var(--bg-light);
+}
+
+.admin-detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-detail-main strong {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.admin-detail-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.admin-detail-meta .badge {
+    display: inline;
+    vertical-align: middle;
+}
+
+.admin-detail-arrow {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.admin-detail-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-md);
+}
+
+.admin-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.admin-detail-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-detail-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.admin-detail-text {
+    background: var(--bg-light);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    line-height: 1.5;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.admin-detail-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.admin-detail-actions .form-row {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* =====================================================
+   ADMIN MODAL (User Edit / Create)
+   ===================================================== */
+
+.admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    padding: var(--spacing-md);
+}
+
+.admin-modal-overlay.active {
+    opacity: 1;
+}
+
+.admin-modal {
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px);
+    transition: transform 0.3s;
+}
+
+.admin-modal-overlay.active .admin-modal {
+    transform: translateY(0);
+}
+
+.admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.admin-modal-body {
+    padding: var(--spacing-lg);
+}
+
+.admin-modal-body hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+}
+
+.admin-modal-body h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+    .admin-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-modal {
+        max-width: 100%;
+        margin: var(--spacing-sm);
+    }
 }
 
 /* =====================================================

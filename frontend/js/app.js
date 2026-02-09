@@ -102,6 +102,10 @@ const App = {
             requiresAuth: true, 
             roles: ['admin'] 
         });
+        Router.register('/admin/news', () => this.renderAdminNews(), { 
+            requiresAuth: true, 
+            roles: ['admin'] 
+        });
         Router.register('/admin/sick-notes', () => this.renderAdminSickNotes(), { 
             requiresAuth: true, 
             roles: ['admin'] 
@@ -1034,19 +1038,19 @@ const App = {
 
             content = `
                 <div class="flex flex-wrap gap-md mb-lg">
-                    <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
+                    <div class="card stat-card" style="flex: 1; min-width: 150px; text-align: center; cursor: pointer;" onclick="App.showUsersWithRole('student')">
                         <h2>${stats.users?.student || 0}</h2>
                         <p>Schüler</p>
                     </div>
-                    <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
+                    <div class="card stat-card" style="flex: 1; min-width: 150px; text-align: center; cursor: pointer;" onclick="App.showUsersWithRole('parent')">
                         <h2>${stats.users?.parent || 0}</h2>
                         <p>Eltern</p>
                     </div>
-                    <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
+                    <div class="card stat-card" style="flex: 1; min-width: 150px; text-align: center; cursor: pointer;" onclick="App.showUsersWithRole('teacher')">
                         <h2>${stats.users?.teacher || 0}</h2>
                         <p>Lehrer</p>
                     </div>
-                    <div class="card" style="flex: 1; min-width: 150px; text-align: center;">
+                    <div class="card stat-card" style="flex: 1; min-width: 150px; text-align: center; cursor: pointer;" onclick="Router.navigate('/admin/classes')">
                         <h2>${stats.classes || 0}</h2>
                         <p>Klassen</p>
                     </div>
@@ -1078,30 +1082,103 @@ const App = {
         `);
     },
 
+    adminUserRoleFilter: null,
+
+    showUsersWithRole(role) {
+        this.adminUserRoleFilter = role;
+        Router.navigate('/admin/users');
+    },
+
+    filterUsersByRole(role) {
+        this.adminUserRoleFilter = role;
+        this.renderAdminUsers();
+    },
+
     async renderAdminUsers() {
         let content = '';
+        const activeRole = this.adminUserRoleFilter || null;
 
         try {
-            const res = await API.admin.getUsers();
-            
-            const headers = ['Avatar', 'Name', 'E-Mail', 'Rolle', 'Status', 'Aktionen'];
-            const rows = (res.users || []).map(u => [
-                u.avatar_emoji || '👤',
-                `${u.first_name} ${u.last_name}`,
-                u.email,
-                Auth.getRoleDisplayName(u.role),
-                u.is_active ? 'Aktiv' : 'Inaktiv',
-                `<button class="btn btn-secondary" onclick="App.editUser('${u.id}')">Bearbeiten</button>`
-            ]);
+            const res = await API.admin.getUsers(activeRole);
+            const users = res.users || [];
+
+            const roleLabels = [
+                { key: null, label: 'Alle' },
+                { key: 'student', label: 'Schüler' },
+                { key: 'parent', label: 'Eltern' },
+                { key: 'teacher', label: 'Lehrer' },
+                { key: 'admin', label: 'Admins' }
+            ];
+
+            let userCards = '';
+            if (users.length === 0) {
+                userCards = Components.emptyState('', 'Keine Benutzer gefunden');
+            } else {
+                userCards = users.map((u, idx) => {
+                    const created = new Date(u.created_at).toLocaleDateString('de-DE');
+                    return `
+                        <div class="admin-detail-card fade-in">
+                            <div class="admin-detail-summary" onclick="App.toggleAdminDetail('user-${idx}')">
+                                <div class="admin-detail-main">
+                                    <strong>${u.avatar_emoji || ''} ${u.first_name} ${u.last_name}</strong>
+                                    <span class="admin-detail-meta">${u.email} | ${Auth.getRoleDisplayName(u.role)} | ${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                                </div>
+                                <span class="admin-detail-arrow" id="arrow-user-${idx}">&#9654;</span>
+                            </div>
+                            <div class="admin-detail-content" id="detail-user-${idx}" style="display:none;">
+                                <div class="admin-detail-grid">
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Vorname</span>
+                                        <span class="admin-detail-value">${u.first_name}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Nachname</span>
+                                        <span class="admin-detail-value">${u.last_name}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">E-Mail</span>
+                                        <span class="admin-detail-value">${u.email}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Rolle</span>
+                                        <span class="admin-detail-value">${Auth.getRoleDisplayName(u.role)}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Status</span>
+                                        <span class="admin-detail-value">${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Registriert</span>
+                                        <span class="admin-detail-value">${created}</span>
+                                    </div>
+                                </div>
+                                <div class="admin-detail-actions mt-sm">
+                                    <button class="btn btn-secondary" onclick="event.stopPropagation(); App.editUser('${u.id}')">Bearbeiten</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
 
             content = `
+                <div class="role-filter-tabs mb-md">
+                    ${roleLabels.map(r => `
+                        <button class="role-filter-btn ${activeRole === r.key ? 'active' : ''}" 
+                                onclick="App.filterUsersByRole(${r.key ? "'" + r.key + "'" : 'null'})">
+                            ${r.label}
+                        </button>
+                    `).join('')}
+                </div>
                 <div class="flex justify-between items-center mb-lg">
                     <div></div>
                     <button class="btn btn-success" onclick="App.showCreateUserModal()">
                         Neuer Benutzer
                     </button>
                 </div>
-                ${Components.table(headers, rows, 'Keine Benutzer gefunden')}
+                <div class="admin-detail-list">
+                    ${userCards}
+                </div>
             `;
         } catch (error) {
             content = `<p class="text-error">Fehler: ${error.message}</p>`;
@@ -1109,9 +1186,7 @@ const App = {
 
         this.render(`
             <h1 class="page-title">Benutzer verwalten</h1>
-            <div class="card">
-                ${content}
-            </div>
+            ${content}
         `);
     },
 
@@ -1425,32 +1500,93 @@ const App = {
 
         try {
             const res = await API.sickNotes.getForAdmin();
-            
-            const headers = ['Person', 'Typ', 'Zeitraum', 'Eingereicht von', 'Status', 'Aktionen'];
-            const rows = (res.sickNotes || []).map(sn => [
-                sn.person_name,
-                sn.person_type === 'student' ? 'Schüler' : 'Lehrer',
-                `${new Date(sn.start_date).toLocaleDateString('de-DE')} - ${new Date(sn.end_date).toLocaleDateString('de-DE')}`,
-                sn.submitted_by_name,
-                Components.badge(
-                    sn.status === 'approved' ? 'Bestätigt' : 
-                    sn.status === 'rejected' ? 'Abgelehnt' : 'Ausstehend',
-                    sn.status
-                ),
-                sn.status === 'pending' ? `
-                    <button class="btn btn-success" onclick="App.reviewSickNote('${sn.id}', 'approved')">Bestätigen</button>
-                    <button class="btn btn-secondary" onclick="App.reviewSickNote('${sn.id}', 'rejected')">Ablehnen</button>
-                ` : (sn.reviewed_by_name ? `Bearbeitet von ${sn.reviewed_by_name}` : '')
-            ]);
+            const sickNotes = res.sickNotes || [];
 
-            content = Components.table(headers, rows, 'Keine Krankmeldungen vorhanden');
+            if (sickNotes.length === 0) {
+                content = Components.emptyState('', 'Keine Krankmeldungen vorhanden');
+            } else {
+                content = sickNotes.map((sn, idx) => {
+                    const startDate = new Date(sn.start_date).toLocaleDateString('de-DE');
+                    const endDate = new Date(sn.end_date).toLocaleDateString('de-DE');
+                    const createdAt = new Date(sn.created_at).toLocaleString('de-DE');
+                    const statusLabel = sn.status === 'approved' ? 'Bestätigt' : sn.status === 'rejected' ? 'Abgelehnt' : 'Ausstehend';
+                    const personType = sn.person_type === 'student' ? 'Schüler' : 'Lehrer';
+
+                    return `
+                        <div class="admin-detail-card fade-in">
+                            <div class="admin-detail-summary" onclick="App.toggleAdminDetail('sn-${idx}')">
+                                <div class="admin-detail-main">
+                                    <strong>${sn.person_name}</strong>
+                                    <span class="admin-detail-meta">${personType} | ${startDate} - ${endDate} | ${Components.badge(statusLabel, sn.status)}</span>
+                                </div>
+                                <span class="admin-detail-arrow" id="arrow-sn-${idx}">&#9654;</span>
+                            </div>
+                            <div class="admin-detail-content" id="detail-sn-${idx}" style="display:none;">
+                                <div class="admin-detail-grid">
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Person</span>
+                                        <span class="admin-detail-value">${sn.person_name} (${personType})</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Zeitraum</span>
+                                        <span class="admin-detail-value">${startDate} - ${endDate}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Eingereicht von</span>
+                                        <span class="admin-detail-value">${sn.submitted_by_name || '-'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Eingereicht am</span>
+                                        <span class="admin-detail-value">${createdAt}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Grund</span>
+                                        <span class="admin-detail-value">${sn.reason || 'Nicht angegeben'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Attest</span>
+                                        <span class="admin-detail-value">${sn.attachment_path ? 'Vorhanden' : 'Keins'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Status</span>
+                                        <span class="admin-detail-value">${Components.badge(statusLabel, sn.status)}</span>
+                                    </div>
+                                    ${sn.reviewed_by_name ? `
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Bearbeitet von</span>
+                                        <span class="admin-detail-value">${sn.reviewed_by_name}</span>
+                                    </div>` : ''}
+                                    ${sn.reviewed_at ? `
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Bearbeitet am</span>
+                                        <span class="admin-detail-value">${new Date(sn.reviewed_at).toLocaleString('de-DE')}</span>
+                                    </div>` : ''}
+                                    ${sn.admin_note ? `
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Admin-Notiz</span>
+                                        <span class="admin-detail-value">${sn.admin_note}</span>
+                                    </div>` : ''}
+                                </div>
+                                ${sn.status === 'pending' ? `
+                                <div class="admin-detail-actions mt-sm">
+                                    <div class="form-row mb-sm">
+                                        <input type="text" id="admin-note-${sn.id}" class="form-input" placeholder="Admin-Notiz (optional)">
+                                    </div>
+                                    <button class="btn btn-success" onclick="event.stopPropagation(); App.reviewSickNote('${sn.id}', 'approved')">Bestätigen</button>
+                                    <button class="btn btn-secondary" onclick="event.stopPropagation(); App.reviewSickNote('${sn.id}', 'rejected')">Ablehnen</button>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         } catch (error) {
             content = `<p class="text-error">Fehler: ${error.message}</p>`;
         }
 
         this.render(`
             <h1 class="page-title">Krankmeldungen</h1>
-            <div class="card">
+            <div class="admin-detail-list">
                 ${content}
             </div>
         `);
@@ -1459,9 +1595,12 @@ const App = {
     async reviewSickNote(id, status) {
         if (!confirm(`Krankmeldung ${status === 'approved' ? 'bestätigen' : 'ablehnen'}?`)) return;
 
+        const noteInput = document.getElementById(`admin-note-${id}`);
+        const adminNote = noteInput ? noteInput.value : null;
+
         try {
-            await API.sickNotes.review(id, status);
-            alert('Status aktualisiert!');
+            await API.sickNotes.review(id, status, adminNote);
+            App.showToast('Status aktualisiert');
             this.renderAdminSickNotes();
         } catch (error) {
             alert('Fehler: ' + error.message);
@@ -1473,27 +1612,192 @@ const App = {
 
         try {
             const res = await API.admin.getLessonContents();
-            
-            const headers = ['Datum', 'Klasse', 'Fach', 'Thema', 'Lehrer'];
-            const rows = (res.contents || []).map(c => [
-                new Date(c.date).toLocaleDateString('de-DE'),
-                c.class_name,
-                c.subject_name || '-',
-                c.topic || '-',
-                c.teacher_name || '-'
-            ]);
+            const contents = res.contents || [];
 
-            content = Components.table(headers, rows, 'Keine Unterrichtsinhalte vorhanden');
+            if (contents.length === 0) {
+                content = Components.emptyState('', 'Keine Unterrichtsinhalte vorhanden');
+            } else {
+                content = contents.map((c, idx) => {
+                    const date = new Date(c.date).toLocaleDateString('de-DE');
+
+                    return `
+                        <div class="admin-detail-card fade-in">
+                            <div class="admin-detail-summary" onclick="App.toggleAdminDetail('lc-${idx}')">
+                                <div class="admin-detail-main">
+                                    <strong>${c.topic || 'Ohne Thema'}</strong>
+                                    <span class="admin-detail-meta">${date} | ${c.class_name || '-'} | ${c.subject_name || '-'} | ${c.teacher_name || '-'}</span>
+                                </div>
+                                <span class="admin-detail-arrow" id="arrow-lc-${idx}">&#9654;</span>
+                            </div>
+                            <div class="admin-detail-content" id="detail-lc-${idx}" style="display:none;">
+                                <div class="admin-detail-grid">
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Datum</span>
+                                        <span class="admin-detail-value">${date}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Klasse</span>
+                                        <span class="admin-detail-value">${c.class_name || '-'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Fach</span>
+                                        <span class="admin-detail-value">${c.subject_name || '-'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Stunde</span>
+                                        <span class="admin-detail-value">${c.lesson_number || '-'}. Stunde</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Lehrer</span>
+                                        <span class="admin-detail-value">${c.teacher_name || '-'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Thema</span>
+                                        <span class="admin-detail-value">${c.topic || '-'}</span>
+                                    </div>
+                                </div>
+                                ${c.description ? `
+                                <div class="admin-detail-field mt-sm">
+                                    <span class="admin-detail-label">Beschreibung</span>
+                                    <div class="admin-detail-value admin-detail-text">${c.description.replace(/\n/g, '<br>')}</div>
+                                </div>` : ''}
+                                ${c.homework ? `
+                                <div class="admin-detail-field mt-sm">
+                                    <span class="admin-detail-label">Hausaufgaben</span>
+                                    <div class="admin-detail-value admin-detail-text">${c.homework.replace(/\n/g, '<br>')}</div>
+                                </div>` : ''}
+                                ${c.materials ? `
+                                <div class="admin-detail-field mt-sm">
+                                    <span class="admin-detail-label">Materialien</span>
+                                    <div class="admin-detail-value admin-detail-text">${c.materials.replace(/\n/g, '<br>')}</div>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         } catch (error) {
             content = `<p class="text-error">Fehler: ${error.message}</p>`;
         }
 
         this.render(`
             <h1 class="page-title">Unterrichtsinhalte</h1>
-            <div class="card">
+            <div class="admin-detail-list">
                 ${content}
             </div>
         `);
+    },
+
+    // =====================================================
+    // ADMIN: Ankündigungen, Detail-Toggle, News löschen
+    // =====================================================
+
+    async renderAdminNews() {
+        let content = '';
+
+        try {
+            const res = await API.news.getAll(null, 200);
+            const news = res.news || [];
+
+            if (news.length === 0) {
+                content = Components.emptyState('', 'Keine Ankündigungen vorhanden');
+            } else {
+                content = news.map((item, idx) => {
+                    const date = new Date(item.published_at || item.created_at).toLocaleDateString('de-DE');
+                    const audienceLabels = { 'all': 'Alle', 'students': 'Schüler', 'parents': 'Eltern', 'teachers': 'Lehrer', 'class': item.class_name ? 'Klasse ' + item.class_name : 'Klasse' };
+                    const priorityLabels = { 'urgent': 'Dringend', 'important': 'Wichtig', 'normal': 'Normal' };
+
+                    return `
+                        <div class="admin-detail-card fade-in">
+                            <div class="admin-detail-summary" onclick="App.toggleAdminDetail('news-${idx}')">
+                                <div class="admin-detail-main">
+                                    <strong>${item.title}</strong>
+                                    <span class="admin-detail-meta">${date} | ${audienceLabels[item.audience] || item.audience} | ${priorityLabels[item.priority] || 'Normal'}${item.is_pinned ? ' | Angepinnt' : ''}</span>
+                                </div>
+                                <span class="admin-detail-arrow" id="arrow-news-${idx}">&#9654;</span>
+                            </div>
+                            <div class="admin-detail-content" id="detail-news-${idx}" style="display:none;">
+                                <div class="admin-detail-grid">
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Autor</span>
+                                        <span class="admin-detail-value">${item.author_name || '-'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Zielgruppe</span>
+                                        <span class="admin-detail-value">${audienceLabels[item.audience] || item.audience}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Priorität</span>
+                                        <span class="admin-detail-value">${priorityLabels[item.priority] || 'Normal'}</span>
+                                    </div>
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Angepinnt</span>
+                                        <span class="admin-detail-value">${item.is_pinned ? 'Ja' : 'Nein'}</span>
+                                    </div>
+                                    ${item.class_name ? `
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Klasse</span>
+                                        <span class="admin-detail-value">${item.class_name}</span>
+                                    </div>` : ''}
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Veröffentlicht</span>
+                                        <span class="admin-detail-value">${date}</span>
+                                    </div>
+                                    ${item.event_date ? `
+                                    <div class="admin-detail-field">
+                                        <span class="admin-detail-label">Termin</span>
+                                        <span class="admin-detail-value">${new Date(item.event_date).toLocaleDateString('de-DE')}${item.event_time ? ' ' + item.event_time + ' Uhr' : ''}${item.event_location ? ' - ' + item.event_location : ''}</span>
+                                    </div>` : ''}
+                                </div>
+                                <div class="admin-detail-field mt-sm">
+                                    <span class="admin-detail-label">Inhalt</span>
+                                    <div class="admin-detail-value admin-detail-text">${(item.content || '-').replace(/\n/g, '<br>')}</div>
+                                </div>
+                                <div class="admin-detail-actions mt-sm">
+                                    <button class="btn btn-secondary" onclick="event.stopPropagation(); App.deleteNews('${item.id}')">Löschen</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        } catch (error) {
+            content = `<p class="text-error">Fehler: ${error.message}</p>`;
+        }
+
+        this.render(`
+            <h1 class="page-title">Ankündigungen verwalten</h1>
+            <div class="flex justify-between items-center mb-lg">
+                <div></div>
+                <a href="#/news/create" class="btn btn-success">Neue Ankündigung</a>
+            </div>
+            <div class="admin-detail-list">
+                ${content}
+            </div>
+        `);
+    },
+
+    async deleteNews(id) {
+        if (!confirm('Ankündigung wirklich löschen?')) return;
+        try {
+            await API.news.delete(id);
+            App.showToast('Ankündigung gelöscht');
+            this.renderAdminNews();
+        } catch (error) {
+            alert('Fehler: ' + error.message);
+        }
+    },
+
+    toggleAdminDetail(id) {
+        const content = document.getElementById('detail-' + id);
+        const arrow = document.getElementById('arrow-' + id);
+        if (content) {
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+            if (arrow) {
+                arrow.innerHTML = isVisible ? '&#9654;' : '&#9660;';
+            }
+        }
     },
 
     // =====================================================
@@ -1624,35 +1928,63 @@ const App = {
     },
 
     showCreateUserModal() {
-        // Einfacher Prompt für Demo - in Produktion ein Modal
-        const email = prompt('E-Mail:');
-        if (!email) return;
-        
-        const firstName = prompt('Vorname:');
-        if (!firstName) return;
-        
-        const lastName = prompt('Nachname:');
-        if (!lastName) return;
-        
-        const role = prompt('Rolle (student/parent/teacher/admin):');
-        if (!['student', 'parent', 'teacher', 'admin'].includes(role)) {
-            alert('Ungültige Rolle!');
-            return;
-        }
-        
-        const password = prompt('Passwort (min. 8 Zeichen):');
-        if (!password || password.length < 8) {
-            alert('Passwort muss mindestens 8 Zeichen haben!');
-            return;
-        }
-
-        this.createUser({ email, firstName, lastName, role, password });
+        const overlay = document.createElement('div');
+        overlay.className = 'admin-modal-overlay';
+        overlay.id = 'create-user-modal';
+        overlay.innerHTML = `
+            <div class="admin-modal">
+                <div class="admin-modal-header">
+                    <h2>Neuer Benutzer</h2>
+                    <button class="close-button" onclick="App.closeAdminModal('create-user-modal')">X</button>
+                </div>
+                <div class="admin-modal-body">
+                    <form onsubmit="App.handleCreateUser(event)">
+                        <div class="form-row">
+                            <label class="form-label">E-Mail *</label>
+                            <input type="email" id="create-email" class="form-input" required>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Vorname *</label>
+                            <input type="text" id="create-firstName" class="form-input" required>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Nachname *</label>
+                            <input type="text" id="create-lastName" class="form-input" required>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Rolle *</label>
+                            <select id="create-role" class="form-input" required>
+                                <option value="student">Schüler</option>
+                                <option value="parent">Eltern</option>
+                                <option value="teacher">Lehrer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Passwort * (min. 8 Zeichen)</label>
+                            <input type="password" id="create-password" class="form-input" minlength="8" required>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block mt-md">Erstellen</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('active'), 10);
     },
 
-    async createUser(data) {
+    async handleCreateUser(event) {
+        event.preventDefault();
         try {
-            await API.admin.createUser(data);
-            alert('Benutzer erstellt!');
+            await API.admin.createUser({
+                email: document.getElementById('create-email').value,
+                firstName: document.getElementById('create-firstName').value,
+                lastName: document.getElementById('create-lastName').value,
+                role: document.getElementById('create-role').value,
+                password: document.getElementById('create-password').value,
+            });
+            App.showToast('Benutzer erstellt');
+            this.closeAdminModal('create-user-modal');
             this.renderAdminUsers();
         } catch (error) {
             alert('Fehler: ' + error.message);
@@ -1660,7 +1992,115 @@ const App = {
     },
 
     async editUser(id) {
-        alert('Bearbeiten-Modal würde hier öffnen für Benutzer: ' + id);
+        try {
+            const res = await API.admin.getUsers();
+            const user = (res.users || []).find(u => u.id === id);
+            if (!user) {
+                alert('Benutzer nicht gefunden');
+                return;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'admin-modal-overlay';
+            overlay.id = 'edit-user-modal';
+            overlay.innerHTML = `
+                <div class="admin-modal">
+                    <div class="admin-modal-header">
+                        <h2>Benutzer bearbeiten</h2>
+                        <button class="close-button" onclick="App.closeAdminModal('edit-user-modal')">X</button>
+                    </div>
+                    <div class="admin-modal-body">
+                        <div class="admin-detail-grid mb-md">
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">E-Mail</span>
+                                <span class="admin-detail-value">${user.email}</span>
+                            </div>
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Registriert am</span>
+                                <span class="admin-detail-value">${new Date(user.created_at).toLocaleDateString('de-DE')}</span>
+                            </div>
+                        </div>
+                        <form onsubmit="App.handleEditUser(event, '${id}')">
+                            <div class="form-row">
+                                <label class="form-label">Vorname</label>
+                                <input type="text" id="edit-firstName" class="form-input" value="${user.first_name}" required>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Nachname</label>
+                                <input type="text" id="edit-lastName" class="form-input" value="${user.last_name}" required>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Rolle</label>
+                                <select id="edit-role" class="form-input">
+                                    <option value="student" ${user.role === 'student' ? 'selected' : ''}>Schüler</option>
+                                    <option value="parent" ${user.role === 'parent' ? 'selected' : ''}>Eltern</option>
+                                    <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>Lehrer</option>
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">
+                                    <input type="checkbox" id="edit-isActive" ${user.is_active ? 'checked' : ''}> Aktiv
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block mt-md">Speichern</button>
+                        </form>
+                        <hr class="mt-lg mb-md">
+                        <h3 class="mb-sm">Passwort zurücksetzen</h3>
+                        <div class="form-row">
+                            <input type="password" id="reset-password" class="form-input" placeholder="Neues Passwort (min. 8 Zeichen)">
+                        </div>
+                        <button class="btn btn-secondary btn-block mt-sm" onclick="App.resetUserPassword('${id}')">Passwort zurücksetzen</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.classList.add('active'), 10);
+        } catch (error) {
+            alert('Fehler: ' + error.message);
+        }
+    },
+
+    closeAdminModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => modal.remove(), 300);
+        }
+    },
+
+    async handleEditUser(event, id) {
+        event.preventDefault();
+        try {
+            await API.admin.updateUser(id, {
+                firstName: document.getElementById('edit-firstName').value,
+                lastName: document.getElementById('edit-lastName').value,
+                role: document.getElementById('edit-role').value,
+                isActive: document.getElementById('edit-isActive').checked,
+            });
+            App.showToast('Benutzer aktualisiert');
+            this.closeAdminModal('edit-user-modal');
+            this.renderAdminUsers();
+        } catch (error) {
+            alert('Fehler: ' + error.message);
+        }
+    },
+
+    async resetUserPassword(id) {
+        const password = document.getElementById('reset-password').value;
+        if (!password || password.length < 8) {
+            alert('Passwort muss mindestens 8 Zeichen haben!');
+            return;
+        }
+        if (!confirm('Passwort wirklich zurücksetzen?')) return;
+        try {
+            await API.admin.resetPassword(id, password);
+            App.showToast('Passwort zurückgesetzt');
+            this.closeAdminModal('edit-user-modal');
+        } catch (error) {
+            alert('Fehler: ' + error.message);
+        }
     },
 };
 

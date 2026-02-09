@@ -102,9 +102,10 @@ const Components = {
                 items.push({ path: '/admin/users', icon: '', label: 'Benutzer' });
                 items.push({ path: '/admin/classes', icon: '', label: 'Klassen' });
                 items.push({ path: '/admin/timetable', icon: '', label: 'Stundenpläne' });
+                items.push({ path: '/admin/news', icon: '', label: 'Ankündigungen' });
                 items.push({ path: '/admin/sick-notes', icon: '', label: 'Krankmeldungen' });
                 items.push({ path: '/admin/contents', icon: '', label: 'Unterrichtsinhalte' });
-                items.push({ path: '/news/create', icon: '', label: 'Ankündigung' });
+                items.push({ path: '/news/create', icon: '', label: 'Neue Ankündigung' });
                 break;
         }
 
