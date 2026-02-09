@@ -1408,6 +1408,7 @@ const App = {
                 </form>
             </div>
             
+            ${Auth.getRole() !== 'student' ? `
             <div class="card mt-lg">
                 <h3 class="mb-md">Passwort ändern</h3>
                 <form onsubmit="App.changePassword(event)">
@@ -1420,6 +1421,7 @@ const App = {
                     </button>
                 </form>
             </div>
+        ` : ''}
         `;
 
         this.render(content);

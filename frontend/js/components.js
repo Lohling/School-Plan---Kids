@@ -79,7 +79,6 @@ const Components = {
 
         switch (role) {
             case 'student':
-                items.push({ path: '/timetable', icon: '', label: 'Mein Stundenplan' });
                 items.push({ path: '/news', icon: '', label: 'Neuigkeiten' });
                 break;
 
