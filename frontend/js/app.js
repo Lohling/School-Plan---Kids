@@ -1381,8 +1381,10 @@ const App = {
                 </div>
                 
                 <form onsubmit="App.updateProfile(event)">
-                    ${Components.formInput('firstName', 'Vorname', 'text', true, user.firstName)}
-                    ${Components.formInput('lastName', 'Nachname', 'text', true, user.lastName)}
+                    ${Auth.getRole() === 'admin' ? `
+                        ${Components.formInput('firstName', 'Vorname', 'text', true, user.firstName)}
+                        ${Components.formInput('lastName', 'Nachname', 'text', true, user.lastName)}
+                    ` : ''}
                     
                     <input type="hidden" id="avatarEmoji" value="${user.avatar || '😊'}">
                     

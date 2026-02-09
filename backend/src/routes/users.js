@@ -41,11 +41,20 @@ router.put('/profile', authenticate, async (req, res) => {
         const allowedEmojis = ['😊', '😄', '🌟', '🦊', '🐰', '🦁', '🐶', '🐱', '🦄', '🌈', '⭐', '🎨', '📚', '⚽', '🎵'];
         const safeEmoji = allowedEmojis.includes(avatarEmoji) ? avatarEmoji : '😊';
 
-        await query(
-            `UPDATE users SET first_name = $1, last_name = $2, avatar_emoji = $3, updated_at = NOW() 
-             WHERE id = $4`,
-            [firstName, lastName, safeEmoji, req.user.id]
-        );
+        // Nur Admins dürfen den Namen ändern
+        if (req.user.role === 'admin') {
+            await query(
+                `UPDATE users SET first_name = $1, last_name = $2, avatar_emoji = $3, updated_at = NOW() 
+                 WHERE id = $4`,
+                [firstName, lastName, safeEmoji, req.user.id]
+            );
+        } else {
+            await query(
+                `UPDATE users SET avatar_emoji = $1, updated_at = NOW() 
+                 WHERE id = $2`,
+                [safeEmoji, req.user.id]
+            );
+        }
 
         res.json({ success: true, message: 'Profil aktualisiert' });
     } catch (error) {
