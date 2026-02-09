@@ -161,6 +161,149 @@ const App = {
         if (handle) handle.style.display = '';
     },
 
+    // =====================================================
+    // LESSON CONTENT (Stundeninhalte)
+    // =====================================================
+
+    async openLessonContent(entryId, subject, lessonNumber, role) {
+        const today = new Date().toISOString().split('T')[0];
+        const canEdit = role === 'teacher' || role === 'admin';
+
+        // Bestehenden Inhalt laden
+        let content = null;
+        try {
+            const res = await API.timetable.getContent(entryId, today);
+            content = res.content;
+        } catch (e) {
+            // kein Inhalt vorhanden
+        }
+
+        // Modal erstellen
+        const modalHtml = `
+            <div class="modal-overlay visible" id="lesson-content-overlay" onclick="if(event.target===this) App.closeLessonContent()">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">${subject} — ${lessonNumber}. Stunde</h2>
+                        <button class="modal-close" onclick="App.closeLessonContent()">X</button>
+                    </div>
+                    
+                    ${canEdit ? `
+                        <form onsubmit="App.saveLessonContent(event, '${entryId}', '${today}')">
+                            <div class="form-row">
+                                <label class="form-label">Thema</label>
+                                <input type="text" id="lc-topic" class="form-input" 
+                                    value="${content?.topic || ''}" placeholder="z.B. Addition im Zahlenraum 100">
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Beschreibung</label>
+                                <textarea id="lc-description" class="form-input" rows="3"
+                                    placeholder="Was wurde in der Stunde gemacht?">${content?.description || ''}</textarea>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Hausaufgaben</label>
+                                <textarea id="lc-homework" class="form-input" rows="2"
+                                    placeholder="Aufgaben f\u00fcr zu Hause">${content?.homework || ''}</textarea>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Ben\u00f6tigte Materialien</label>
+                                <input type="text" id="lc-materials" class="form-input"
+                                    value="${content?.materials || ''}" placeholder="z.B. Schere, Kleber, Farbstifte">
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block mt-md">
+                                Speichern
+                            </button>
+                        </form>
+                        ${content ? `<p class="text-muted mt-sm" style="font-size: 12px; text-align: center;">
+                            Zuletzt bearbeitet: ${new Date(content.updated_at || content.created_at).toLocaleString('de-DE')}
+                            ${content.created_by_name ? ` von ${content.created_by_name}` : ''}
+                        </p>` : ''}
+                    ` : `
+                        ${content ? `
+                            <div class="lesson-content-view">
+                                ${content.topic ? `
+                                    <div class="lc-section">
+                                        <div class="lc-label">Thema</div>
+                                        <div class="lc-value">${content.topic}</div>
+                                    </div>
+                                ` : ''}
+                                ${content.description ? `
+                                    <div class="lc-section">
+                                        <div class="lc-label">Beschreibung</div>
+                                        <div class="lc-value">${content.description}</div>
+                                    </div>
+                                ` : ''}
+                                ${content.homework ? `
+                                    <div class="lc-section">
+                                        <div class="lc-label">Hausaufgaben</div>
+                                        <div class="lc-value">${content.homework}</div>
+                                    </div>
+                                ` : ''}
+                                ${content.materials ? `
+                                    <div class="lc-section">
+                                        <div class="lc-label">Ben\u00f6tigte Materialien</div>
+                                        <div class="lc-value">${content.materials}</div>
+                                    </div>
+                                ` : ''}
+                                <p class="text-muted mt-sm" style="font-size: 12px; text-align: center;">
+                                    ${content.created_by_name ? `Eingetragen von ${content.created_by_name}` : ''}
+                                    ${content.updated_at ? ` am ${new Date(content.updated_at).toLocaleDateString('de-DE')}` : ''}
+                                </p>
+                            </div>
+                        ` : `
+                            <div class="empty-state">
+                                <p>Noch keine Stundeninhalte eingetragen.</p>
+                            </div>
+                        `}
+                    `}
+                </div>
+            </div>
+        `;
+
+        // Modal zum DOM hinzufügen
+        const div = document.createElement('div');
+        div.id = 'lesson-content-modal-wrapper';
+        div.innerHTML = modalHtml;
+        document.body.appendChild(div);
+    },
+
+    async saveLessonContent(event, entryId, date) {
+        event.preventDefault();
+
+        const data = {
+            timetableEntryId: entryId,
+            date: date,
+            topic: document.getElementById('lc-topic').value,
+            description: document.getElementById('lc-description').value,
+            homework: document.getElementById('lc-homework').value,
+            materials: document.getElementById('lc-materials').value
+        };
+
+        try {
+            await API.timetable.saveContent(data);
+            this.closeLessonContent();
+            this.showToast('Stundeninhalt gespeichert');
+        } catch (error) {
+            this.showToast('Fehler beim Speichern', 'error');
+        }
+    },
+
+    closeLessonContent() {
+        const wrapper = document.getElementById('lesson-content-modal-wrapper');
+        if (wrapper) wrapper.remove();
+    },
+
+    showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('visible'), 10);
+        setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    },
+
     openModal(id) {
         const modal = document.getElementById(`${id}-overlay`);
         if (modal) {

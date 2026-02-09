@@ -90,7 +90,6 @@ const Components = {
                 break;
 
             case 'teacher':
-                items.push({ path: '/timetable', icon: '', label: 'Mein Stundenplan' });
                 items.push({ path: '/colleagues', icon: '', label: 'Kollegen-Pläne' });
                 items.push({ path: '/supervisions', icon: '', label: 'Pausenaufsichten' });
                 items.push({ path: '/classes', icon: '', label: 'Meine Klassen' });
@@ -180,11 +179,14 @@ const Components = {
 
         const subjectClass = this.getSubjectClass(entry.subject || entry.shortName);
         const hasSubstitution = entry.isSubstitution || entry.isVertretung;
+        const role = Auth.getRole();
+        const isClickable = entry.id && (role === 'teacher' || role === 'admin' || role === 'parent');
+        const clickHandler = isClickable ? `onclick="App.openLessonContent('${entry.id}', '${(entry.subject || '').replace(/'/g, '\\\'')}', ${entry.lessonNumber}, '${role}')"` : '';
 
         return `
             <div class="lesson-row fade-in">
                 <div class="lesson-time">${entry.lessonNumber}. Std</div>
-                <div class="lesson-block ${subjectClass}">
+                <div class="lesson-block ${subjectClass} ${isClickable ? 'clickable' : ''}" ${clickHandler}>
                     ${hasSubstitution ? '<div class="lesson-badge">V</div>' : ''}
                     <div class="lesson-subject">
                         ${entry.icon || ''} ${entry.subject}
@@ -194,6 +196,7 @@ const Components = {
                         ${entry.room ? `· ${entry.room}` : ''}
                     </div>
                     ${entry.className ? `<div class="lesson-details">${entry.className}</div>` : ''}
+                    ${isClickable ? '<div class="lesson-content-hint">Inhalt ansehen / bearbeiten</div>' : ''}
                 </div>
             </div>
         `;
