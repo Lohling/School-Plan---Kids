@@ -420,37 +420,44 @@ BEGIN
     -- =====================================================
     -- NEUIGKEITEN / NEWS
     -- =====================================================
-    INSERT INTO news (school_id, class_id, title, content, audience, priority, is_pinned, event_date, event_time, event_location, created_by) VALUES
+    INSERT INTO news (school_id, class_id, title, content, audience, priority, is_pinned, event_date, event_time, event_location, created_by, published_at) VALUES
     -- Schulweite News
     (v_school_id, NULL, '🎄 Weihnachtsfeier 2025', 
      'Liebe Eltern und Kinder,\n\nam 18. Dezember findet unsere große Weihnachtsfeier statt! Jede Klasse führt etwas vor. Bitte bringt Plätzchen und gute Laune mit! 🍪🎵',
-     'all', 'important', true, '2025-12-18', '14:00', 'Aula', v_admin_id),
+     'all', 'important', true, '2025-12-18', '14:00', 'Aula', v_admin_id,
+     '2025-12-01 10:00:00'),
     
     (v_school_id, NULL, '📢 Neue Pausenregeln',
-     'Ab nächster Woche gelten neue Pausenregeln:\n1. Fußball nur auf dem Sportplatz\n2. Keine Handys auf dem Schulhof\n3. Bei Regen: Aufenthalt in den Klassenzimmern\n\nBitte besprecht das mit euren Kindern.',
-     'all', 'normal', false, NULL, NULL, NULL, v_admin_id),
+     'Ab dem 26. Januar gelten neue Pausenregeln:\n1. Fußball nur auf dem Sportplatz\n2. Keine Handys auf dem Schulhof\n3. Bei Regen: Aufenthalt in den Klassenzimmern\n\nBitte besprecht das mit euren Kindern.',
+     'all', 'normal', false, NULL, NULL, NULL, v_admin_id,
+     '2026-01-20 08:30:00'),
     
     (v_school_id, NULL, '🏫 Elternsprechtag',
      'Der Elternsprechtag findet am 15. Februar statt. Bitte melden Sie sich bei der jeweiligen Klassenlehrerin/dem Klassenlehrer an.\n\nZeitraum: 15:00 - 19:00 Uhr',
-     'parents', 'important', true, '2026-02-15', '15:00', 'Klassenzimmer', v_admin_id),
+     'parents', 'important', true, '2026-02-15', '15:00', 'Klassenzimmer', v_admin_id,
+     '2026-02-03 09:00:00'),
     
     (v_school_id, NULL, '⚽ Bundesjugendspiele',
      'Am 20. März finden die Bundesjugendspiele statt!\n\nBitte denkt an:\n- Sportkleidung\n- Sonnencreme\n- Trinkflasche\n- Gute Laune! 🌞',
-     'all', 'normal', false, '2026-03-20', '08:30', 'Sportplatz', v_teacher_fischer),
+     'all', 'normal', false, '2026-03-20', '08:30', 'Sportplatz', v_teacher_fischer,
+     '2026-02-14 11:00:00'),
     
     -- Klassen-spezifische News
     (v_school_id, v_class_2a, '📚 Leseabend Klasse 2a',
      'Am Freitag veranstalten wir einen Leseabend! Bringt euer Lieblingsbuch und eine Taschenlampe mit. Pizza gibt es auch! 🍕📖',
-     'class', 'normal', false, CURRENT_DATE + INTERVAL '5 days', '18:00', 'Klassenzimmer 103', v_teacher_schmidt),
+     'class', 'normal', false, CURRENT_DATE + INTERVAL '5 days', '18:00', 'Klassenzimmer 103', v_teacher_schmidt,
+     CURRENT_TIMESTAMP - INTERVAL '2 days'),
     
     (v_school_id, v_class_1a, '🎨 Bastelnachmittag',
-     'Nächsten Mittwoch basteln wir Laternen für den Martinsumzug! Bitte bringt eine Schere und Kleber mit.',
-     'class', 'normal', false, CURRENT_DATE + INTERVAL '7 days', '14:00', 'Klassenzimmer 101', v_teacher_mueller),
+     'Nächsten Mittwoch basteln wir Frühlingsdeko für unsere Klassenzimmer! Bitte bringt eine Schere, Kleber und Buntpapier mit. 🌷🦋',
+     'class', 'normal', false, CURRENT_DATE + INTERVAL '7 days', '14:00', 'Klassenzimmer 101', v_teacher_mueller,
+     CURRENT_TIMESTAMP - INTERVAL '3 days'),
     
     -- Lehrer-News
     (v_school_id, NULL, '👩‍🏫 Lehrerkonferenz',
      'Nächsten Montag findet um 14:00 Uhr die Lehrerkonferenz statt. Thema: Digitalisierung im Unterricht. Bitte Laptop mitbringen.',
-     'teachers', 'normal', false, CURRENT_DATE + INTERVAL '3 days', '14:00', 'Lehrerzimmer', v_admin_id);
+     'teachers', 'normal', false, CURRENT_DATE + INTERVAL '3 days', '14:00', 'Lehrerzimmer', v_admin_id,
+     CURRENT_TIMESTAMP - INTERVAL '1 day');
 
     -- =====================================================
     -- EVENTS / TERMINE

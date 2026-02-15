@@ -274,28 +274,80 @@ BEGIN
     -- =====================================================
     -- ZUSÄTZLICHE NEWS (aktueller und relevanter)
     -- =====================================================
-    INSERT INTO news (school_id, class_id, title, content, audience, priority, is_pinned, event_date, event_time, event_location, created_by) VALUES
+    INSERT INTO news (school_id, class_id, title, content, audience, priority, is_pinned, event_date, event_time, event_location, created_by, published_at) VALUES
     -- Aktuelle schulweite News
     (v_school_id, NULL, '🚌 Busplan-Änderung ab 10.02.',
      'Liebe Eltern,\n\nab dem 10. Februar fährt die Buslinie 42 morgens 5 Minuten früher (07:35 statt 07:40). Nachmittags bleibt alles beim Alten.\n\nBitte informiert eure Kinder!',
-     'parents', 'important', true, NULL, NULL, NULL, v_admin_id),
+     'parents', 'important', true, NULL, NULL, NULL, v_admin_id,
+     '2026-02-05 14:00:00'),
 
     (v_school_id, NULL, '🎭 Theaterbesuch am 25.02.',
      'Am 25. Februar besuchen die Klassen 3a, 3b und 4a das Stadttheater. Aufgeführt wird "Jim Knopf und Lukas der Lokomotivführer".\n\nKosten: 5€ pro Kind\nAbfahrt: 09:00 Uhr am Schulhof\nRückkehr: ca. 12:30 Uhr',
-     'all', 'normal', false, '2026-02-25', '09:00', 'Stadttheater', v_teacher_fischer),
+     'all', 'normal', false, '2026-02-25', '09:00', 'Stadttheater', v_teacher_fischer,
+     '2026-02-10 10:00:00'),
 
-    (v_school_id, NULL, '📸 Schulfotograf am 12.02.',
-     'Am Donnerstag, den 12. Februar kommt der Schulfotograf! Bitte achtet darauf, dass eure Kinder an diesem Tag ordentlich angezogen sind.\n\nEinzelfotos + Klassenfotos werden gemacht.',
-     'all', 'normal', false, '2026-02-12', '08:30', 'Klassenzimmer', v_admin_id),
+    (v_school_id, NULL, '📸 Schulfotograf am 19.02.',
+     'Am Donnerstag, den 19. Februar kommt der Schulfotograf! Bitte achtet darauf, dass eure Kinder an diesem Tag ordentlich angezogen sind.\n\nEinzelfotos + Klassenfotos werden gemacht.',
+     'all', 'normal', false, '2026-02-19', '08:30', 'Klassenzimmer', v_admin_id,
+     '2026-02-12 09:30:00'),
 
     -- Klassen-spezifische News
     (v_school_id, v_class_3a, '🏊 Schwimmen ab nächste Woche',
      'Liebe Eltern der 3a,\n\nab nächster Woche findet jeden Mittwoch Schwimmunterricht statt. Bitte packt euren Kindern Folgendes ein:\n- Badeanzug/Badehose\n- Handtuch\n- Badekappe\n- Duschgel\n\nTreffpunkt: 09:50 Uhr am Schulhof',
-     'class', 'important', false, CURRENT_DATE + INTERVAL '5 days', '09:50', 'Hallenbad', v_teacher_fischer),
+     'class', 'important', false, CURRENT_DATE + INTERVAL '5 days', '09:50', 'Hallenbad', v_teacher_fischer,
+     CURRENT_TIMESTAMP - INTERVAL '1 day'),
 
     (v_school_id, v_class_2b, '🎶 Musikprojekt: Unser Klassenlied',
      'In den nächsten Wochen erarbeiten wir unser eigenes Klassenlied! Wer ein Instrument spielen kann, darf es gerne mitbringen. 🎵🎸\n\nAufführung beim Elternabend am 15. März!',
-     'class', 'normal', false, NULL, NULL, NULL, v_teacher_braun);
+     'class', 'normal', false, NULL, NULL, NULL, v_teacher_braun,
+     '2026-02-11 13:00:00');
+
+    -- =====================================================
+    -- ZUSÄTZLICHE EVENTS
+    -- =====================================================
+
+    -- =====================================================
+    -- VERTRETUNGSSTUNDEN (für Klassen aus seed2)
+    -- =====================================================
+    -- Klasse 3a: Fischer ist krank, Schmidt übernimmt Mathe am Montag 1. Stunde
+    INSERT INTO substitutions (original_entry_id, substitute_teacher_id, substitute_subject_id, substitute_room_id, date, reason, note_for_students, is_cancelled, created_by)
+    SELECT te.id, v_teacher_schmidt, v_sub_mathe, v_room_105, CURRENT_DATE + INTERVAL '1 day',
+           'Herr Fischer ist erkrankt', 'Frau Schmidt macht heute Mathe mit euch! 📐', false, v_admin_id
+    FROM timetable_entries te
+    WHERE te.class_id = v_class_3a AND te.weekday = 'Mo' AND te.lesson_number = 1 AND te.entry_type = 'lesson'
+    LIMIT 1;
+
+    -- Klasse 2b: Sport fällt aus am Mittwoch (Turnhalle gesperrt)
+    INSERT INTO substitutions (original_entry_id, substitute_teacher_id, substitute_subject_id, substitute_room_id, date, reason, note_for_students, is_cancelled, created_by)
+    SELECT te.id, NULL, NULL, NULL, CURRENT_DATE + INTERVAL '2 days',
+           'Turnhalle wegen Reparatur gesperrt', 'Sport fällt heute leider aus 😔', true, v_admin_id
+    FROM timetable_entries te
+    WHERE te.class_id = v_class_2b AND te.weekday = 'Mi' AND te.lesson_number = 3 AND te.entry_type = 'lesson'
+    LIMIT 1;
+
+    -- Klasse 1b: Braun (Kunst) krank, Mueller übernimmt Deutsch am Montag 4. Stunde
+    INSERT INTO substitutions (original_entry_id, substitute_teacher_id, substitute_subject_id, substitute_room_id, date, reason, note_for_students, is_cancelled, created_by)
+    SELECT te.id, v_teacher_mueller, v_sub_deutsch, v_room_102, CURRENT_DATE + INTERVAL '1 day',
+           'Frau Braun ist auf Fortbildung', 'Frau Müller macht heute Deutsch mit euch! 📖', false, v_admin_id
+    FROM timetable_entries te
+    WHERE te.class_id = v_class_1b AND te.weekday = 'Mo' AND te.lesson_number = 4 AND te.entry_type = 'lesson'
+    LIMIT 1;
+
+    -- Klasse 3b: Weber (Mathe) krank, Fischer übernimmt HSU am Dienstag 1. Stunde
+    INSERT INTO substitutions (original_entry_id, substitute_teacher_id, substitute_subject_id, substitute_room_id, date, reason, note_for_students, is_cancelled, created_by)
+    SELECT te.id, v_teacher_fischer, v_sub_hsu, v_room_106, CURRENT_DATE + INTERVAL '3 days',
+           'Frau Weber ist erkrankt', 'Herr Fischer macht heute HSU mit euch! 🌍', false, v_admin_id
+    FROM timetable_entries te
+    WHERE te.class_id = v_class_3b AND te.weekday = 'Di' AND te.lesson_number = 1 AND te.entry_type = 'lesson'
+    LIMIT 1;
+
+    -- Klasse 3a: Religion fällt aus am Donnerstag
+    INSERT INTO substitutions (original_entry_id, substitute_teacher_id, substitute_subject_id, substitute_room_id, date, reason, note_for_students, is_cancelled, created_by)
+    SELECT te.id, NULL, NULL, NULL, CURRENT_DATE + INTERVAL '4 days',
+           'Pfarrer erkrankt', 'Religion fällt leider aus. Ihr habt früher frei! 🎉', true, v_admin_id
+    FROM timetable_entries te
+    WHERE te.class_id = v_class_3a AND te.weekday = 'Do' AND te.lesson_number = 4 AND te.entry_type = 'lesson'
+    LIMIT 1;
 
     -- =====================================================
     -- ZUSÄTZLICHE EVENTS

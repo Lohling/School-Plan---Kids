@@ -72,6 +72,10 @@ const App = {
             requiresAuth: true, 
             roles: ['teacher'] 
         });
+        Router.register('/class/:classId/students', (params) => this.renderClassStudents(params.classId), { 
+            requiresAuth: true, 
+            roles: ['teacher', 'admin'] 
+        });
         Router.register('/news/create', () => this.renderCreateNews(), { 
             requiresAuth: true, 
             roles: ['teacher', 'admin'] 
@@ -991,6 +995,61 @@ const App = {
         `);
     },
 
+    async renderClassStudents(classId) {
+        let content = '';
+
+        try {
+            const res = await API.classes.getOne(classId);
+            const classInfo = res.class;
+            const students = res.students || [];
+
+            // Aktuelle Krankmeldungen laden
+            let sickStudentIds = [];
+            try {
+                const sickRes = await API.sickNotes.getForClass(classId);
+                sickStudentIds = (sickRes.sickNotes || []).map(sn => `${sn.first_name} ${sn.last_name}`);
+            } catch (e) {}
+
+            if (students.length > 0) {
+                content = `
+                    <div class="card">
+                        <p class="text-muted mb-md">${students.length} Schüler in dieser Klasse</p>
+                        <div class="student-list">
+                            ${students.map(s => {
+                                const fullName = `${s.first_name} ${s.last_name}`;
+                                const isSick = sickStudentIds.includes(fullName);
+                                return `
+                                    <div class="flex items-center gap-md mb-sm" style="padding: 10px; background: ${isSick ? '#fff3e0' : '#f5f5f5'}; border-radius: 8px;${isSick ? ' border-left: 3px solid #ff9800;' : ''}">
+                                        <span style="font-size: 28px;">${s.avatar_emoji || '👤'}</span>
+                                        <div style="flex: 1;">
+                                            <strong>${s.first_name} ${s.last_name}</strong>
+                                        </div>
+                                        ${isSick ? '<span style="color: #ff9800; font-size: 14px;">🤒 krank gemeldet</span>' : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                content = Components.emptyState('', 'Keine Schüler in dieser Klasse');
+            }
+
+            this.render(`
+                <div class="flex items-center gap-md mb-md">
+                    <a href="#/classes" class="btn btn-secondary">&larr; Zurück</a>
+                    <h1 class="page-title" style="margin: 0;">Klasse ${classInfo.name} — Schüler</h1>
+                </div>
+                ${content}
+            `);
+        } catch (error) {
+            this.render(`
+                <a href="#/classes" class="btn btn-secondary mb-md">&larr; Zurück</a>
+                <p class="text-error">Fehler beim Laden: ${error.message}</p>
+            `);
+        }
+    },
+
     async renderTeacherClasses() {
         let content = '';
 
@@ -1083,9 +1142,11 @@ const App = {
     },
 
     adminUserRoleFilter: null,
+    adminUserSearchQuery: '',
 
     showUsersWithRole(role) {
         this.adminUserRoleFilter = role;
+        this.adminUserSearchQuery = '';
         Router.navigate('/admin/users');
     },
 
@@ -1094,13 +1155,92 @@ const App = {
         this.renderAdminUsers();
     },
 
+    filterUsersBySearch(query) {
+        this.adminUserSearchQuery = query.toLowerCase();
+        // Nur die Liste aktualisieren, nicht die ganze Seite neu rendern
+        this._updateAdminUserList();
+    },
+
+    _buildUserCards(users) {
+        if (users.length === 0) {
+            return Components.emptyState('', 'Keine Benutzer gefunden');
+        }
+        return users.map((u, idx) => {
+            const created = new Date(u.created_at).toLocaleDateString('de-DE');
+            return `
+                <div class="admin-detail-card fade-in">
+                    <div class="admin-detail-summary" onclick="App.toggleAdminDetail('user-${idx}')">
+                        <div class="admin-detail-main">
+                            <strong>${u.avatar_emoji || ''} ${u.first_name} ${u.last_name}</strong>
+                            <span class="admin-detail-meta">${u.email} | ${Auth.getRoleDisplayName(u.role)} | ${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                        </div>
+                        <span class="admin-detail-arrow" id="arrow-user-${idx}">&#9654;</span>
+                    </div>
+                    <div class="admin-detail-content" id="detail-user-${idx}" style="display:none;">
+                        <div class="admin-detail-grid">
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Vorname</span>
+                                <span class="admin-detail-value">${u.first_name}</span>
+                            </div>
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Nachname</span>
+                                <span class="admin-detail-value">${u.last_name}</span>
+                            </div>
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">E-Mail</span>
+                                <span class="admin-detail-value">${u.email}</span>
+                            </div>
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Rolle</span>
+                                <span class="admin-detail-value">${Auth.getRoleDisplayName(u.role)}</span>
+                            </div>
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Status</span>
+                                <span class="admin-detail-value">${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                            </div>
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Registriert</span>
+                                <span class="admin-detail-value">${created}</span>
+                            </div>
+                        </div>
+                        <div class="admin-detail-actions mt-sm">
+                            <button class="btn btn-secondary" onclick="event.stopPropagation(); App.editUser('${u.id}')">Bearbeiten</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    _filterCachedUsers() {
+        const searchQuery = this.adminUserSearchQuery || '';
+        let users = this._cachedAdminUsers || [];
+        if (searchQuery) {
+            users = users.filter(u => {
+                const full = `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase();
+                return full.includes(searchQuery);
+            });
+        }
+        return users;
+    },
+
+    _updateAdminUserList() {
+        const listEl = document.getElementById('admin-user-list');
+        if (!listEl) return;
+        const users = this._filterCachedUsers();
+        listEl.innerHTML = this._buildUserCards(users);
+    },
+
     async renderAdminUsers() {
         let content = '';
         const activeRole = this.adminUserRoleFilter || null;
+        const searchQuery = this.adminUserSearchQuery || '';
 
         try {
             const res = await API.admin.getUsers(activeRole);
-            const users = res.users || [];
+            this._cachedAdminUsers = res.users || [];
+
+            const users = this._filterCachedUsers();
 
             const roleLabels = [
                 { key: null, label: 'Alle' },
@@ -1110,56 +1250,7 @@ const App = {
                 { key: 'admin', label: 'Admins' }
             ];
 
-            let userCards = '';
-            if (users.length === 0) {
-                userCards = Components.emptyState('', 'Keine Benutzer gefunden');
-            } else {
-                userCards = users.map((u, idx) => {
-                    const created = new Date(u.created_at).toLocaleDateString('de-DE');
-                    return `
-                        <div class="admin-detail-card fade-in">
-                            <div class="admin-detail-summary" onclick="App.toggleAdminDetail('user-${idx}')">
-                                <div class="admin-detail-main">
-                                    <strong>${u.avatar_emoji || ''} ${u.first_name} ${u.last_name}</strong>
-                                    <span class="admin-detail-meta">${u.email} | ${Auth.getRoleDisplayName(u.role)} | ${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
-                                </div>
-                                <span class="admin-detail-arrow" id="arrow-user-${idx}">&#9654;</span>
-                            </div>
-                            <div class="admin-detail-content" id="detail-user-${idx}" style="display:none;">
-                                <div class="admin-detail-grid">
-                                    <div class="admin-detail-field">
-                                        <span class="admin-detail-label">Vorname</span>
-                                        <span class="admin-detail-value">${u.first_name}</span>
-                                    </div>
-                                    <div class="admin-detail-field">
-                                        <span class="admin-detail-label">Nachname</span>
-                                        <span class="admin-detail-value">${u.last_name}</span>
-                                    </div>
-                                    <div class="admin-detail-field">
-                                        <span class="admin-detail-label">E-Mail</span>
-                                        <span class="admin-detail-value">${u.email}</span>
-                                    </div>
-                                    <div class="admin-detail-field">
-                                        <span class="admin-detail-label">Rolle</span>
-                                        <span class="admin-detail-value">${Auth.getRoleDisplayName(u.role)}</span>
-                                    </div>
-                                    <div class="admin-detail-field">
-                                        <span class="admin-detail-label">Status</span>
-                                        <span class="admin-detail-value">${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
-                                    </div>
-                                    <div class="admin-detail-field">
-                                        <span class="admin-detail-label">Registriert</span>
-                                        <span class="admin-detail-value">${created}</span>
-                                    </div>
-                                </div>
-                                <div class="admin-detail-actions mt-sm">
-                                    <button class="btn btn-secondary" onclick="event.stopPropagation(); App.editUser('${u.id}')">Bearbeiten</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+            const userCards = this._buildUserCards(users);
 
             content = `
                 <div class="role-filter-tabs mb-md">
@@ -1170,13 +1261,16 @@ const App = {
                         </button>
                     `).join('')}
                 </div>
-                <div class="flex justify-between items-center mb-lg">
-                    <div></div>
+                <div class="flex justify-between items-center mb-lg gap-md">
+                    <input type="text" class="form-input" id="admin-user-search" placeholder="Name oder E-Mail suchen..." 
+                           value="${searchQuery}" 
+                           oninput="App.filterUsersBySearch(this.value)"
+                           style="max-width: 350px;">
                     <button class="btn btn-success" onclick="App.showCreateUserModal()">
                         Neuer Benutzer
                     </button>
                 </div>
-                <div class="admin-detail-list">
+                <div class="admin-detail-list" id="admin-user-list">
                     ${userCards}
                 </div>
             `;
@@ -1202,7 +1296,7 @@ const App = {
                 `${c.grade_level}. Klasse`,
                 c.class_teacher_name || '-',
                 c.student_count || 0,
-                `<a href="#/timetable/${c.id}" class="btn btn-secondary">Stundenplan</a>`
+                `<a href="#/class/${c.id}/students" class="btn btn-secondary" style="margin-right:6px;">Schüler</a><a href="#/timetable/${c.id}" class="btn btn-secondary">Stundenplan</a>`
             ]);
 
             content = Components.table(headers, rows, 'Keine Klassen gefunden');

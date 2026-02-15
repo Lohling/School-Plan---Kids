@@ -90,6 +90,7 @@ const Components = {
                 break;
 
             case 'teacher':
+                items.push({ path: '/news', icon: '', label: 'Neuigkeiten' });
                 items.push({ path: '/colleagues', icon: '', label: 'Kollegen-Pläne' });
                 items.push({ path: '/supervisions', icon: '', label: 'Pausenaufsichten' });
                 items.push({ path: '/classes', icon: '', label: 'Meine Klassen' });
@@ -181,8 +182,9 @@ const Components = {
         const subjectClass = this.getSubjectClass(entry.subject || entry.shortName);
         const hasSubstitution = entry.isSubstitution || entry.isVertretung;
         const role = Auth.getRole();
-        const isClickable = entry.id && (role === 'teacher' || role === 'admin' || role === 'parent');
+        const isClickable = entry.id && (role === 'teacher' || role === 'admin' || role === 'parent' || role === 'student');
         const clickHandler = isClickable ? `onclick="App.openLessonContent('${entry.id}', '${(entry.subject || '').replace(/'/g, '\\\'')}', ${entry.lessonNumber}, '${role}')"` : '';
+        const contentHint = (role === 'teacher' || role === 'admin') ? 'Inhalt bearbeiten' : 'Inhalt einsehen';
 
         return `
             <div class="lesson-row fade-in">
@@ -197,7 +199,7 @@ const Components = {
                         ${entry.room ? `· ${entry.room}` : ''}
                     </div>
                     ${entry.className ? `<div class="lesson-details">${entry.className}</div>` : ''}
-                    ${isClickable ? '<div class="lesson-content-hint">Inhalt ansehen / bearbeiten</div>' : ''}
+                    ${isClickable ? `<div class="lesson-content-hint">${contentHint}</div>` : ''}
                 </div>
             </div>
         `;
