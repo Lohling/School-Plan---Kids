@@ -1,1 +1,2 @@
-UPDATE users SET password_hash = '$2b$10$R.wyFAoVLcYPR50463ETU.GLeHc9jdv/j0sZUCFJOjMmUHaoAr9su' WHERE email = 'admin@schule.de';
+-- Admin Password: SchoolPlan@2026!Secure
+UPDATE users SET password_hash = '$2b$10$gvB6UJo0LLOVFjfp4XlP5ur/qbCpT/P9zOCDSb.S6yXfjsQ45BMBm' WHERE email = 'admin@schule.de';

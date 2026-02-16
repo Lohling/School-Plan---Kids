@@ -1,15 +1,17 @@
 const bcrypt = require('bcrypt');
 
-async function test() {
-    const password = 'admin123';
+async function generateAdminPassword() {
+    // Starkes Admin-Passwort
+    const adminPassword = 'SchoolPlan@2026!Secure';
     
-    // Neuen Hash generieren
-    const newHash = await bcrypt.hash(password, 10);
-    console.log('Neuer Hash:', newHash);
+    // Hash generieren
+    const adminHash = await bcrypt.hash(adminPassword, 10);
+    console.log('Admin-Passwort:', adminPassword);
+    console.log('Admin-Hash:', adminHash);
     
-    // Testen
-    const match = await bcrypt.compare(password, newHash);
-    console.log('Match mit neuem Hash:', match);
+    // Test
+    const match = await bcrypt.compare(adminPassword, adminHash);
+    console.log('Hash-Verifikation:', match);
 }
 
-test();
+generateAdminPassword();

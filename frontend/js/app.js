@@ -381,7 +381,7 @@ const App = {
                     </div>
 
                     <div class="test-login-section">
-                        <p class="test-login-label">Schnell-Login (Test)</p>
+                        <p class="test-login-label">Schnell-Login (Demo-Benutzer)</p>
                         <div class="test-login-buttons">
                             <button class="test-login-btn student" onclick="App.fillTestLogin('leon.klein@schule.de', 'test1234')">
                                 Leon (Schüler)
@@ -391,9 +391,6 @@ const App = {
                             </button>
                             <button class="test-login-btn teacher" onclick="App.fillTestLogin('mueller@schule.de', 'test1234')">
                                 Fr. Müller (Lehrer)
-                            </button>
-                            <button class="test-login-btn admin" onclick="App.fillTestLogin('admin@schule.de', 'test1234')">
-                                Admin
                             </button>
                         </div>
                     </div>
