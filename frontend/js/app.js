@@ -381,16 +381,16 @@ const App = {
                     </div>
 
                     <div class="test-login-section">
-                        <p class="test-login-label">Schnell-Login (Demo-Benutzer)</p>
+                        <p class="test-login-label">Schnell-Login (Zufälliger Demo-Benutzer)</p>
                         <div class="test-login-buttons">
-                            <button class="test-login-btn student" onclick="App.fillTestLogin('leon.klein@schule.de', 'test1234')">
-                                Leon (Schüler)
+                            <button class="test-login-btn student" onclick="App.loginRandomUser('student')">
+                                📚 Schüler (zufällig)
                             </button>
-                            <button class="test-login-btn parent" onclick="App.fillTestLogin('peter.klein@eltern.de', 'test1234')">
-                                Peter (Eltern)
+                            <button class="test-login-btn parent" onclick="App.loginRandomUser('parent')">
+                                👨‍👩‍👧 Eltern (zufällig)
                             </button>
-                            <button class="test-login-btn teacher" onclick="App.fillTestLogin('mueller@schule.de', 'test1234')">
-                                Fr. Müller (Lehrer)
+                            <button class="test-login-btn teacher" onclick="App.loginRandomUser('teacher')">
+                                👩‍🏫 Lehrer (zufällig)
                             </button>
                         </div>
                     </div>
@@ -404,6 +404,47 @@ const App = {
         document.getElementById('email').value = email;
         document.getElementById('password').value = password;
         document.getElementById('login-error').classList.add('hidden');
+    },
+
+    async loginRandomUser(role) {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        
+        try {
+            btn.disabled = true;
+            btn.textContent = 'Lädt...';
+
+            // API aufrufen für zufälligen Benutzer
+            const response = await fetch(`/api/auth/random-user/${role}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                alert('Fehler: ' + (data.error || 'Benutzer konnte nicht geladen werden'));
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            const user = data.user;
+            const email = user.email;
+            const password = 'test1234'; // Standard-Passwort für Demo-Benutzer
+
+            // Direkt anmelden
+            const loginResult = await Auth.login(email, password);
+
+            if (loginResult.success) {
+                Router.navigate('/');
+            } else {
+                alert('Anmeldung fehlgeschlagen: ' + (loginResult.error || 'Unbekannter Fehler'));
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Fehler beim Login: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     },
 
     async handleLogin(event) {
