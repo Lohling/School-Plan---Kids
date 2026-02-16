@@ -349,9 +349,13 @@ const App = {
         const content = `
             <div class="login-page">
                 <div class="login-container">
-                    <div class="login-logo">School Plan</div>
-                    <h1 class="login-title">School Plan - <span class="highlight">Kids</span></h1>
-                    <p class="login-subtitle">Dein digitaler Vertretungsplan</p>
+                    <div class="login-brand">
+                        <h1 class="login-title">School Plan -</h1>
+                        <div class="login-kids-row">
+                            <span class="login-kids-badge">Kids</span>
+                            <span class="login-notification-dot"></span>
+                        </div>
+                    </div>
                     
                     <div id="login-error" class="login-error hidden"></div>
                     

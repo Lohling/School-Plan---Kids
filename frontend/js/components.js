@@ -13,17 +13,18 @@ const Components = {
 
         return `
             <header class="header">
-                <div class="menu-icon" onclick="App.toggleNav()">☰</div>
-                <div class="header-logo">
-                    <span class="header-title">School Plan - <span class="highlight">Kids</span></span>
+                <div class="menu-icon" onclick="App.toggleNav()">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
                 </div>
-                <div class="header-spacer"></div>
-                <div class="header-user">
-                    <div class="user-info">
-                        <div class="user-name">${user.firstName} ${user.lastName}</div>
-                        <div class="user-role">${Auth.getRoleDisplayName()}</div>
-                    </div>
-                    <div class="user-avatar" onclick="App.toggleNav()">${user.avatar || '😊'}</div>
+                <div class="header-center">
+                    <span class="header-klasse-label">Klasse</span>
+                    <span class="header-klasse-arrow">▼</span>
+                </div>
+                <div class="header-right">
+                    <span class="header-kids-badge">Kids</span>
+                    <span class="header-notification-dot"></span>
                 </div>
             </header>
         `;
