@@ -77,30 +77,50 @@ Nach dem ersten Start wird ein Admin-Benutzer erstellt:
 ## 🏗️ Architektur
 
 ```
-school-plan-kids/
-├── docker-compose.yml      # Container-Orchestrierung
+.
+├── .env
+├── .gitignore
 ├── backend/
 │   ├── Dockerfile
 │   ├── package.json
-│   ├── src/
-│   │   ├── server.js       # Express Server
-│   │   ├── config/         # Datenbank-Konfiguration
-│   │   ├── middleware/     # Auth, Validierung
-│   │   └── routes/         # API Endpunkte
-│   └── database/
-│       └── init.sql        # Datenbank-Schema
+│   ├── test-password.js
+│   ├── update-admin-password.js
+│   ├── database/
+│   │   ├── init.sql
+│   │   ├── seed.sql
+│   │   └── seed2.sql
+│   └── src/
+│       ├── server.js
+│       ├── config/
+│       │   └── database.js
+│       ├── middleware/
+│       │   └── auth.js
+│       └── routes/
+│           ├── admin.js
+│           ├── auth.js
+│           ├── classes.js
+│           ├── news.js
+│           ├── sickNotes.js
+│           ├── timetable.js
+│           └── users.js
+├── docker-compose.yml
+├── fix-password.sql
 ├── frontend/
 │   ├── Dockerfile
-│   ├── nginx.conf
 │   ├── index.html
+│   ├── nginx.conf
 │   ├── css/
-│   │   └── style.css       # Kinderfreundliches Design
+│   │   └── style.css
 │   └── js/
-│       ├── api.js          # API Client
-│       ├── auth.js         # Authentifizierung
-│       ├── router.js       # Client-Routing
-│       ├── components.js   # UI Komponenten
-│       └── app.js          # Hauptanwendung
+│       ├── api.js
+│       ├── app.js
+│       ├── auth.js
+│       ├── components.js
+│       └── router.js
+├── index.html
+├── README.md
+├── script.js
+└── style.css
 ```
 
 ## 🔒 Datenschutz & Sicherheit
