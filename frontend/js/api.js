@@ -12,13 +12,15 @@ const API = {
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
         
+        const { headers: optHeaders, ...restOptions } = options;
+        
         const config = {
             headers: {
                 'Content-Type': 'application/json',
-                ...options.headers,
+                ...optHeaders,
             },
             credentials: 'include', // Cookies mitsenden
-            ...options,
+            ...restOptions,
         };
 
         // Body für POST/PUT Requests
@@ -34,7 +36,15 @@ const API = {
 
         try {
             const response = await fetch(url, config);
-            const data = await response.json();
+            
+            let data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                data = { error: text || `HTTP Fehler ${response.status}` };
+            }
 
             if (!response.ok) {
                 // Bei 401 zur Login-Seite (aber nicht bei Logout selbst)
