@@ -12,11 +12,11 @@ services:
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
       - ./backend/database/seed2.sql:/docker-entrypoint-initdb.d/03-seed2.sql
-      - ./backend/database/fix_teacher_conflicts.sql:/docker-entrypoint-initdb.d/04-fix-teacher-conflicts.sql
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     networks:
       - schoolplan-network
+    restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U schoolplan_user -d schoolplan"]
       interval: 10s
@@ -39,13 +39,19 @@ services:
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_production}
       SESSION_SECRET: ${SESSION_SECRET:-session_secret_change_me}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - schoolplan-network
-    restart: unless-stopped
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3001/api/timetable', (r) => { process.exit(r.statusCode < 500 ? 0 : 1) }).on('error', () => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Frontend (Nginx serving static files)
   frontend:
@@ -56,10 +62,23 @@ services:
     ports:
       - "2080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - schoolplan-network
-    restart: unless-stopped
+    restart: always
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: schoolplan-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+    restart: always
+    networks:
+      - schoolplan-network
 
 volumes:
   postgres_data:
