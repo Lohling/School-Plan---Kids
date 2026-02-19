@@ -47,13 +47,13 @@ const Trigger = (() => {
     }
 
     // --------------------------------------------------
-    // Overlay ausblenden (dauerhaft)
+    // Overlay ausblenden (dauerhaft – aber Polling läuft weiter für Reset)
     // --------------------------------------------------
     function hideOverlay() {
         clearTimeout(barTimer);
         overlay.classList.remove('trigger-overlay--visible');
         overlay.classList.add('trigger-overlay--hidden');
-        clearInterval(pollTimer); // Kein weiteres Polling nötig
+        countdownActive = false;
     }
 
     // --------------------------------------------------
@@ -66,12 +66,20 @@ const Trigger = (() => {
 
             const data = await response.json();
 
-            if (!data.locked) {
-                // Website dauerhaft freigegeben
-                hideOverlay();
-            } else if (data.remainingMs !== null && !countdownActive) {
-                // Countdown gerade gestartet
-                startCountdown(data.remainingMs);
+            if (data.locked) {
+                // Gesperrt → Overlay zeigen (bei Reset auch wieder)
+                if (overlay.classList.contains('trigger-overlay--hidden')) {
+                    showOverlayStatic();
+                    countdownActive = false;
+                }
+                if (data.remainingMs !== null && !countdownActive) {
+                    startCountdown(data.remainingMs);
+                }
+            } else {
+                // Freigegeben → Overlay verstecken
+                if (!overlay.classList.contains('trigger-overlay--hidden')) {
+                    hideOverlay();
+                }
             }
         } catch (e) {
             // Netzwerkfehler → still ignorieren
