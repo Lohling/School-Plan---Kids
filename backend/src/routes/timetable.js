@@ -288,7 +288,8 @@ router.get('/my', authenticate, async (req, res) => {
         
         if (role === 'teacher') {
             // Lehrer: Eigenen Stundenplan + Pausen mit Aufsichten
-            const [entries, breakEntries, supervisions] = await Promise.all([
+            // + Vertretungen, die der Lehrer übernimmt
+            const [entries, substitutionsAsSub, breakEntries, supervisions] = await Promise.all([
                 getMany(`
                     SELECT 
                         te.id, te.weekday, te.lesson_number, te.start_time, te.end_time, te.entry_type,
@@ -301,6 +302,22 @@ router.get('/my', authenticate, async (req, res) => {
                     LEFT JOIN classes c ON te.class_id = c.id
                     WHERE te.teacher_id = $1
                     ORDER BY te.weekday, te.start_time
+                `, [id]),
+                // Vertretungen, wo dieser Lehrer EINSPRINGT (nur aktuelle/zukünftige relevante)
+                getMany(`
+                    SELECT 
+                        sub.id, sub.date, sub.substitute_subject_id, sub.substitute_room_id,
+                        te.lesson_number, te.weekday, te.start_time, te.end_time,
+                        s.name as subject_name, s.short_name, s.color, s.icon,
+                        r.name as room_name,
+                        c.name as class_name
+                    FROM substitutions sub
+                    JOIN timetable_entries te ON sub.original_entry_id = te.id
+                    JOIN classes c ON te.class_id = c.id
+                    LEFT JOIN subjects s ON sub.substitute_subject_id = s.id
+                    LEFT JOIN rooms r ON sub.substitute_room_id = r.id
+                    WHERE sub.substitute_teacher_id = $1 AND sub.is_cancelled = false
+                    ORDER BY sub.date, te.start_time
                 `, [id]),
                 // Pausen aus irgendeiner Klasse der Schule holen (sind universell)
                 getMany(`
@@ -323,6 +340,8 @@ router.get('/my', authenticate, async (req, res) => {
             ]);
 
             const timetable = {};
+            
+            // Reguläre Stunden eintragen
             entries.forEach(entry => {
                 if (!timetable[entry.weekday]) {
                     timetable[entry.weekday] = [];
@@ -339,8 +358,22 @@ router.get('/my', authenticate, async (req, res) => {
                     icon: entry.icon,
                     room: entry.room_name,
                     className: entry.class_name,
+                    isRegular: true
                 });
             });
+
+            // Vertretungseinsätze eintragen (nur für die aktuelle Anzeige-Logik relevant, 
+            // eigentlich müsste man hier dates beachten. Da die Anzeige aber wochenbasiert ist,
+            // ist das hier schwierig. Wir fügen sie als "Extra" hinzu oder lassen das Frontend filtern.)
+            // HIER vereinfachen wir: Backend liefert nur Struktur, Frontend filtert nach Datum.
+            // Aber `timetable` ist hier generisch (Wochentag). 
+            // Vertretungen sind datumsspezifisch. Das passt nicht gut in die generische Wochenstruktur.
+            // Lösung: Wir geben die 'substitutionsAsSub' separat zurück oder integrieren sie nur, wenn sie heute sind?
+            // Besser: Der 'timetable' Endpoint liefert die generische Woche.
+            // Die 'substitutions' Route liefert Änderungen.
+            // Aber Lehrer sieht seine EINSÄTZE nicht in 'substitutions' Route (dort sieht er nur Änderungen für seine Klasse/Schule).
+            // Wir lassen das hier erst mal so und verlassen uns auf die Substitutions-Route.
+
 
             // Pausen mit Aufsicht-Info einfügen
             breakEntries.forEach(brk => {

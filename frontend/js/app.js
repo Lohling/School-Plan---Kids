@@ -614,7 +614,22 @@ const App = {
         if (!substitutions || substitutions.length === 0) return entries;
         return entries.map(entry => {
             if (entry.type !== 'lesson') return entry;
-            const sub = substitutions.find(s => s.lesson_number === entry.lessonNumber);
+            
+            // Finde passende Vertretung
+            // Für Lehrer müssen wir auch die Klasse prüfen, da sie mehrere Klassen haben
+            // Für Schüler gibt es nur eine Klasse, daher reicht die lessonNumber (und substitutions sind bereits gefiltert)
+            const sub = substitutions.find(s => {
+                const sameLesson = s.lesson_number === entry.lessonNumber;
+                if (!sameLesson) return false;
+                
+                // Wenn der Eintrag eine Klasse hat (Lehrer-Ansicht), muss die Klasse übereinstimmen
+                if (entry.className && s.class_name) {
+                    return entry.className === s.class_name;
+                }
+                
+                return true;
+            });
+
             if (!sub) return entry;
             if (sub.is_cancelled) {
                 return {

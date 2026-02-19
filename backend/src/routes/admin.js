@@ -130,18 +130,21 @@ const checkTeacherDateTimeConflict = async (teacherId, date, startTime, endTime,
         return { hasConflict: false, conflicts: [] };
     }
 
-    // Wochentag aus dem Datum ermitteln
-    const dateObj = new Date(date);
-    const weekdayNum = dateObj.getDay();
+    // Wochentag aus dem Datum ermitteln (YYYY-MM-DD)
+    // Wir nutzen das lokale Datum, da die Schule wohl in einer Zeitzone operiert
+    const [year, month, day] = date.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    const weekdayNum = localDate.getDay();
     const weekdaysMap = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 0: null, 6: null };
     const weekday = weekdaysMap[weekdayNum];
 
     if (!weekday) {
-        // Wochenende - es sollte keine regulären Lektionen geben
+        // Wochenende - es sollte keine regulren Lektionen geben
         return { hasConflict: false, conflicts: [] };
     }
 
-    // Überprüfe normale Stundenplan-Einträge für diesen Tag
+    // berprfe normale Stundenplan-Eintrge fr diesen Tag
+    // WICHTIG: Eintrge ignorieren, bei denen der Lehrer VERTRETEN wird (also nicht da ist)
     let sql = `
         SELECT DISTINCT
             'regular' as type,
@@ -157,6 +160,13 @@ const checkTeacherDateTimeConflict = async (teacherId, date, startTime, endTime,
           AND te.entry_type = 'lesson'
           AND (
               (te.start_time, te.end_time) OVERLAPS ($4::TIME, $5::TIME)
+          )
+          -- Ignoriere Stunden, wo dieser Lehrer an diesem Datum vertreten wird
+          AND NOT EXISTS (
+              SELECT 1 FROM substitutions s 
+              WHERE s.original_entry_id = te.id 
+                AND s.date = $6::DATE 
+                AND (s.substitute_teacher_id IS NULL OR s.substitute_teacher_id != $1)
           )
         
         UNION
