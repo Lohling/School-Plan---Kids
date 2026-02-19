@@ -12,6 +12,7 @@ services:
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
       - ./backend/database/seed2.sql:/docker-entrypoint-initdb.d/03-seed2.sql
+      - ./backend/database/seed3.sql:/docker-entrypoint-initdb.d/04-seed3.sql
     ports:
       - "127.0.0.1:5433:5432"
     networks:
