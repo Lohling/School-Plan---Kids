@@ -179,6 +179,21 @@ const Components = {
             `;
         }
 
+        // Ausgefallene Stunde gesondert darstellen
+        if (entry.isCancelled) {
+            return `
+                <div class="lesson-row fade-in">
+                    <div class="lesson-time">${entry.lessonNumber}. Std</div>
+                    <div class="lesson-block lesson-cancelled">
+                        <div class="lesson-badge lesson-badge-cancelled">Ausfall</div>
+                        <div class="lesson-subject lesson-cancelled-subject">❌ ${entry.originalSubject || entry.subject}</div>
+                        <div class="lesson-details lesson-cancelled-label">Fällt aus</div>
+                        ${entry.substituteNote ? `<div class="lesson-substitute-note">${entry.substituteNote}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
         const subjectClass = this.getSubjectClass(entry.subject || entry.shortName);
         const hasSubstitution = entry.isSubstitution || entry.isVertretung;
         const role = Auth.getRole();
@@ -189,7 +204,7 @@ const Components = {
         return `
             <div class="lesson-row fade-in">
                 <div class="lesson-time">${entry.lessonNumber}. Std</div>
-                <div class="lesson-block ${subjectClass} ${isClickable ? 'clickable' : ''}" ${clickHandler}>
+                <div class="lesson-block ${subjectClass} ${isClickable ? 'clickable' : ''} ${hasSubstitution ? 'lesson-substituted' : ''}" ${clickHandler}>
                     ${hasSubstitution ? '<div class="lesson-badge">V</div>' : ''}
                     <div class="lesson-subject">
                         ${entry.icon || ''} ${entry.subject}
@@ -199,6 +214,7 @@ const Components = {
                         ${entry.room ? `· ${entry.room}` : ''}
                     </div>
                     ${entry.className ? `<div class="lesson-details">${entry.className}</div>` : ''}
+                    ${entry.substituteNote ? `<div class="lesson-substitute-note">${entry.substituteNote}</div>` : ''}
                     ${isClickable ? `<div class="lesson-content-hint">${contentHint}</div>` : ''}
                 </div>
             </div>

@@ -7,6 +7,8 @@ const App = {
     container: null,
     currentDay: 'Mo',
     selectedClassId: null,
+    currentTimetableData: {},   // Basis-Stundenplan für alle Tage
+    currentSubstitutions: [],  // Vertretungen für den aktuell angezeigten Tag
 
     /**
      * Initialisiert die Anwendung
@@ -591,6 +593,48 @@ const App = {
         return ['Mo', 'Di', 'Mi', 'Do', 'Fr'].includes(today) ? today : 'Mo';
     },
 
+    /**
+     * Gibt das Datum (YYYY-MM-DD) für einen Wochentag in der aktuellen Woche zurück
+     */
+    getDateForWeekday(weekday) {
+        const dayMap = { Mo: 1, Di: 2, Mi: 3, Do: 4, Fr: 5 };
+        const today = new Date();
+        const dow = today.getDay() === 0 ? 7 : today.getDay(); // 1=Mo, 7=So
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (dow - 1));
+        const result = new Date(monday);
+        result.setDate(monday.getDate() + (dayMap[weekday] - 1));
+        return result.toISOString().split('T')[0];
+    },
+
+    /**
+     * Wendet Vertretungen auf Stundenplan-Einträge an
+     */
+    applySubstitutions(entries, substitutions) {
+        if (!substitutions || substitutions.length === 0) return entries;
+        return entries.map(entry => {
+            if (entry.type !== 'lesson') return entry;
+            const sub = substitutions.find(s => s.lesson_number === entry.lessonNumber);
+            if (!sub) return entry;
+            if (sub.is_cancelled) {
+                return {
+                    ...entry,
+                    isCancelled: true,
+                    originalSubject: entry.subject,
+                    substituteNote: sub.note_for_students,
+                };
+            }
+            return {
+                ...entry,
+                isSubstitution: true,
+                teacher: sub.substitute_teacher || entry.teacher,
+                subject: sub.substitute_subject || entry.subject,
+                room: sub.substitute_room || entry.room,
+                substituteNote: sub.note_for_students,
+            };
+        });
+    },
+
     async loadTimetableForDay(day) {
         const container = document.getElementById('timetable-container');
         if (!container) return;
@@ -598,14 +642,27 @@ const App = {
         container.innerHTML = '<p>Lädt...</p>';
 
         try {
-            let res;
+            // Datum für den gewählten Tag berechnen (für Vertretungsabfrage)
+            const dateForDay = this.getDateForWeekday(day);
+
+            let timetablePromise;
             if (this.selectedClassId) {
-                res = await API.timetable.getForClass(this.selectedClassId);
+                timetablePromise = API.timetable.getForClass(this.selectedClassId);
             } else {
-                res = await API.timetable.getMy();
+                timetablePromise = API.timetable.getMy();
             }
-            const lessons = res.timetable[day] || [];
-            container.innerHTML = Components.timetable(lessons);
+
+            const [res, subsRes] = await Promise.all([
+                timetablePromise,
+                API.timetable.getSubstitutions(dateForDay, this.selectedClassId || null)
+                    .catch(() => ({ substitutions: [] }))
+            ]);
+
+            const baseEntries = res.timetable[day] || [];
+            const substitutions = subsRes.substitutions || [];
+            const entries = this.applySubstitutions(baseEntries, substitutions);
+
+            container.innerHTML = Components.timetable(entries);
         } catch (error) {
             container.innerHTML = `<p class="text-error">Fehler: ${error.message}</p>`;
         }
@@ -717,14 +774,23 @@ const App = {
         this.selectedClassId = null;
 
         try {
-            const res = await API.timetable.getMy();
             const today = this.getTodayWeekday();
             this.currentDay = today;
-            
+            const todayDate = this.getDateForWeekday(today);
+
+            const [res, subsRes] = await Promise.all([
+                API.timetable.getMy(),
+                API.timetable.getSubstitutions(todayDate, null)
+                    .catch(() => ({ substitutions: [] }))
+            ]);
+
+            this.currentTimetableData = res.timetable;
+            const entries = this.applySubstitutions(res.timetable[today] || [], subsRes.substitutions || []);
+
             timetableContent = `
                 ${Components.dayTabs(today)}
                 <div id="timetable-container">
-                    ${Components.timetable(res.timetable[today] || [])}
+                    ${Components.timetable(entries)}
                 </div>
             `;
         } catch (error) {
@@ -744,23 +810,30 @@ const App = {
         let classInfo = '';
 
         try {
-            const [timetableRes, classRes] = await Promise.all([
-                API.timetable.getForClass(classId),
-                API.classes.getOne(classId).catch(() => null)
-            ]);
-            
             const today = this.getTodayWeekday();
             this.currentDay = today;
             this.selectedClassId = classId;
-            
+            const todayDate = this.getDateForWeekday(today);
+
+            const [timetableRes, classRes, subsRes] = await Promise.all([
+                API.timetable.getForClass(classId),
+                API.classes.getOne(classId).catch(() => null),
+                API.timetable.getSubstitutions(todayDate, classId)
+                    .catch(() => ({ substitutions: [] }))
+            ]);
+
+            this.currentTimetableData = timetableRes.timetable;
+
             if (classRes?.class) {
                 classInfo = `Klasse ${classRes.class.name}`;
             }
 
+            const entries = this.applySubstitutions(timetableRes.timetable[today] || [], subsRes.substitutions || []);
+
             timetableContent = `
                 ${Components.dayTabs(today)}
                 <div id="timetable-container">
-                    ${Components.timetable(timetableRes.timetable[today] || [])}
+                    ${Components.timetable(entries)}
                 </div>
             `;
         } catch (error) {
