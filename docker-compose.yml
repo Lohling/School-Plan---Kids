@@ -86,3 +86,5 @@ volumes:
 networks:
   schoolplan-network:
     driver: bridge
+
+# test CI/CD
