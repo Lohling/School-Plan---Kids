@@ -117,10 +117,7 @@ Nach dem ersten Start wird ein Admin-Benutzer erstellt:
 │       ├── auth.js
 │       ├── components.js
 │       └── router.js
-├── index.html
-├── README.md
-├── script.js
-└── style.css
+└── README.md
 ```
 
 ## 🔒 Datenschutz & Sicherheit

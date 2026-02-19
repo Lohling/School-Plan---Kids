@@ -297,9 +297,9 @@ CREATE INDEX idx_audit_created ON audit_log(created_at DESC);
 INSERT INTO schools (id, name, address, email) VALUES 
 (uuid_generate_v4(), 'Sonnenschein Grundschule', 'Schulstraße 1, 12345 Musterstadt', 'info@sonnenschein-grundschule.de');
 
--- Beispiel-Admin (Passwort: "test1234" - bcrypt hash)
+-- Beispiel-Admin (Passwort: "SchoolPlan@2026!Secure" - bcrypt hash)
 INSERT INTO users (school_id, email, password_hash, first_name, last_name, role, avatar_emoji) 
-SELECT id, 'admin@schule.de', '$2b$10$Sl1Cy2jUr4hIb6gYJ7tb4uCMvmFPJMAQlfXdNqFoL.t2ku5Vo5Jpu', 'Admin', 'Schulleitung', 'admin', '👨‍💼'
+SELECT id, 'admin@schule.de', '$2b$10$gvB6UJo0LLOVFjfp4XlP5ur/qbCpT/P9zOCDSb.S6yXfjsQ45BMBm', 'Admin', 'Schulleitung', 'admin', '👨‍💼'
 FROM schools LIMIT 1;
 
 -- Beispiel-Fächer
