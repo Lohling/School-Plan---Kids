@@ -38,6 +38,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-secure_password_123}
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_production}
       SESSION_SECRET: ${SESSION_SECRET:-session_secret_change_me}
+      TRIGGER_SECRET: ${TRIGGER_SECRET:-trigger_secret_change_me}
     ports:
       - "127.0.0.1:3001:3001"
     depends_on:

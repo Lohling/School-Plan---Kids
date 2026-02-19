@@ -20,6 +20,7 @@ const newsRoutes = require('./routes/news');
 const sickNotesRoutes = require('./routes/sickNotes');
 const classesRoutes = require('./routes/classes');
 const adminRoutes = require('./routes/admin');
+const triggerRoutes = require('./routes/trigger');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -115,6 +116,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/sick-notes', sickNotesRoutes);
 app.use('/api/classes', classesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/trigger', triggerRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

@@ -1856,3 +1856,80 @@ input, select, textarea {
 .gap-md { gap: var(--spacing-md); }
 
 .hidden { display: none !important; }
+
+/* =====================================================
+   Lehrer-Trigger: Schwarzer Bildschirm
+   ===================================================== */
+
+.trigger-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    pointer-events: all;
+}
+
+/* Versteckt – komplett unsichtbar & nicht interaktiv */
+.trigger-overlay--hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+/* Sichtbar */
+.trigger-overlay--visible {
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.trigger-overlay__content {
+    max-width: 560px;
+}
+
+.trigger-overlay__icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: trigger-pulse 2s ease-in-out infinite;
+}
+
+@keyframes trigger-pulse {
+    0%, 100% { transform: scale(1); }
+    50%        { transform: scale(1.12); }
+}
+
+.trigger-overlay__message {
+    color: #ffffff;
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    letter-spacing: 0.02em;
+}
+
+.trigger-overlay__hint {
+    color: #aaaaaa;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    margin: 0 0 2.5rem;
+}
+
+/* Fortschrittsbalken */
+.trigger-overlay__bar-wrap {
+    width: 100%;
+    height: 6px;
+    background: #1e1e1e;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.trigger-overlay__bar {
+    height: 100%;
+    width: 100%;
+    background: var(--primary-red, #e64043);
+    border-radius: 3px;
+    transform-origin: left;
+}
