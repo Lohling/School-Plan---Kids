@@ -270,23 +270,26 @@ router.get('/users', async (req, res) => {
         const { role, search } = req.query;
 
         let sql = `
-            SELECT id, email, first_name, last_name, role, avatar_emoji, is_active, created_at
-            FROM users 
-            WHERE school_id = $1
+            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.avatar_emoji, u.is_active, u.created_at,
+                   c.name as class_name
+            FROM users u
+            LEFT JOIN student_classes sc ON sc.student_id = u.id
+            LEFT JOIN classes c ON c.id = sc.class_id
+            WHERE u.school_id = $1
         `;
         const params = [req.user.school_id];
 
         if (role) {
             params.push(role);
-            sql += ` AND role = $${params.length}`;
+            sql += ` AND u.role = $${params.length}`;
         }
 
         if (search) {
             params.push(`%${search}%`);
-            sql += ` AND (first_name ILIKE $${params.length} OR last_name ILIKE $${params.length} OR email ILIKE $${params.length})`;
+            sql += ` AND (u.first_name ILIKE $${params.length} OR u.last_name ILIKE $${params.length} OR u.email ILIKE $${params.length})`;
         }
 
-        sql += ' ORDER BY role, last_name, first_name';
+        sql += ' ORDER BY u.role, u.last_name, u.first_name';
 
         const users = await getMany(sql, params);
 

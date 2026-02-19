@@ -1290,7 +1290,7 @@ const App = {
                     <div class="admin-detail-summary" onclick="App.toggleAdminDetail('user-${idx}')">
                         <div class="admin-detail-main">
                             <strong>${u.avatar_emoji || ''} ${u.first_name} ${u.last_name}</strong>
-                            <span class="admin-detail-meta">${u.email} | ${Auth.getRoleDisplayName(u.role)} | ${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                            <span class="admin-detail-meta">${u.email} | ${Auth.getRoleDisplayName(u.role)}${u.role === 'student' && u.class_name ? ' • Klasse ' + u.class_name : ''} | ${u.is_active ? 'Aktiv' : 'Inaktiv'}</span>
                         </div>
                         <span class="admin-detail-arrow" id="arrow-user-${idx}">&#9654;</span>
                     </div>
@@ -1320,6 +1320,11 @@ const App = {
                                 <span class="admin-detail-label">Registriert</span>
                                 <span class="admin-detail-value">${created}</span>
                             </div>
+                            ${u.role === 'student' && u.class_name ? `
+                            <div class="admin-detail-field">
+                                <span class="admin-detail-label">Klasse</span>
+                                <span class="admin-detail-value">${u.class_name}</span>
+                            </div>` : ''}
                         </div>
                         <div class="admin-detail-actions mt-sm">
                             <button class="btn btn-secondary" onclick="event.stopPropagation(); App.editUser('${u.id}')">Bearbeiten</button>
@@ -2303,7 +2308,7 @@ const App = {
                 <div class="text-center mb-lg">
                     <div style="font-size: 80px;" id="current-avatar">${user.avatar || '😊'}</div>
                     <h2>${user.firstName} ${user.lastName}</h2>
-                    <p class="text-muted">${Auth.getRoleDisplayName()} • ${user.schoolName}</p>
+                    <p class="text-muted">${Auth.getRoleDisplayName()}${user.role === 'student' && user.className ? ' • Klasse ' + user.className : ''} • ${user.schoolName}</p>
                 </div>
                 
                 <h3 class="mb-md">Avatar ändern:</h3>

@@ -110,9 +110,12 @@ router.post('/logout', authenticate, async (req, res) => {
 router.get('/me', authenticate, async (req, res) => {
     try {
         const user = await getOne(
-            `SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.avatar_emoji, s.name as school_name
+            `SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.avatar_emoji, s.name as school_name,
+                    c.name as class_name
              FROM users u
              JOIN schools s ON u.school_id = s.id
+             LEFT JOIN student_classes sc ON sc.student_id = u.id
+             LEFT JOIN classes c ON c.id = sc.class_id
              WHERE u.id = $1`,
             [req.user.id]
         );
@@ -130,6 +133,7 @@ router.get('/me', authenticate, async (req, res) => {
                 role: user.role,
                 avatar: user.avatar_emoji,
                 schoolName: user.school_name,
+                className: user.class_name || null,
             },
         });
     } catch (error) {
