@@ -14,6 +14,195 @@ const { body, validationResult } = require('express-validator');
 router.use(authenticate, requireAdmin);
 
 /**
+ * Hilfsfunktion: Überprüft ob ein Lehrer zur gleichen Zeit einen Unterricht hat
+ * @param teacherId - ID des Lehrers
+ * @param weekday - Wochentag (Mo, Di, Mi, Do, Fr)
+ * @param startTime - Startzeit
+ * @param endTime - Endzeit
+ * @param schoolId - Schulen-ID
+ * @param excludeEntryId - Optional: ID des zu ignorierenden Eintrags (z.B. beim Aktualisieren)
+ * @returns Objekt mit conflict-Status und überlappenden Einträgen
+ */
+const checkTeacherTimeConflict = async (teacherId, weekday, startTime, endTime, schoolId, excludeEntryId = null) => {
+    if (!teacherId) {
+        return { hasConflict: false, conflicts: [] };
+    }
+
+    let sql = `
+        SELECT 
+            te.id, te.class_id, te.lesson_number, te.start_time, te.end_time,
+            c.name as class_name,
+            u.first_name, u.last_name
+        FROM timetable_entries te
+        JOIN classes c ON te.class_id = c.id
+        JOIN users u ON te.teacher_id = u.id
+        WHERE te.teacher_id = $1 
+          AND c.school_id = $2
+          AND te.weekday = $3
+          AND te.entry_type = 'lesson'
+          AND (
+              (te.start_time, te.end_time) OVERLAPS ($4::TIME, $5::TIME)
+          )
+    `;
+    
+    const params = [teacherId, schoolId, weekday, startTime, endTime];
+    
+    if (excludeEntryId) {
+        sql += ` AND te.id != $${params.length + 1}`;
+        params.push(excludeEntryId);
+    }
+
+    const conflicts = await getMany(sql, params);
+
+    return {
+        hasConflict: conflicts.length > 0,
+        conflicts: conflicts.map(c => ({
+            id: c.id,
+            className: c.class_name,
+            startTime: c.start_time,
+            endTime: c.end_time,
+            lessonNumber: c.lesson_number
+        }))
+    };
+};
+
+/**
+ * Hilfsfunktion: Überprüft ob ein Lehrer am selben Wochentag bereits eine Stunde mit derselben Stundennummer hat
+ * @param teacherId - ID des Lehrers
+ * @param weekday - Wochentag (Mo, Di, Mi, Do, Fr)
+ * @param lessonNumber - Stundennummer (z.B. 1, 2, 3...)
+ * @param schoolId - Schulen-ID
+ * @param excludeEntryId - Optional: ID des zu ignorierenden Eintrags (beim Aktualisieren)
+ * @returns Objekt mit conflict-Status und überlappenden Einträgen
+ */
+const checkTeacherLessonNumberConflict = async (teacherId, weekday, lessonNumber, schoolId, excludeEntryId = null) => {
+    if (!teacherId) {
+        return { hasConflict: false, conflicts: [] };
+    }
+
+    let sql = `
+        SELECT 
+            te.id, te.lesson_number, te.start_time, te.end_time,
+            c.name as class_name
+        FROM timetable_entries te
+        JOIN classes c ON te.class_id = c.id
+        WHERE te.teacher_id = $1
+          AND c.school_id = $2
+          AND te.weekday = $3
+          AND te.lesson_number = $4
+          AND te.entry_type = 'lesson'
+    `;
+
+    const params = [teacherId, schoolId, weekday, lessonNumber];
+
+    if (excludeEntryId) {
+        sql += ` AND te.id != $${params.length + 1}`;
+        params.push(excludeEntryId);
+    }
+
+    const conflicts = await getMany(sql, params);
+
+    return {
+        hasConflict: conflicts.length > 0,
+        conflicts: conflicts.map(c => ({
+            id: c.id,
+            className: c.class_name,
+            startTime: c.start_time,
+            endTime: c.end_time,
+            lessonNumber: c.lesson_number
+        }))
+    };
+};
+
+/**
+ * Hilfsfunktion: Überprüft ob ein Lehrer am spezifischen Datum zur gleichen Zeit unterrichtet
+ * (für Vertretungen, die an spezifischen Daten gelten)
+ * @param teacherId - ID des Lehrers
+ * @param date - Datum im Format YYYY-MM-DD
+ * @param startTime - Startzeit
+ * @param endTime - Endzeit
+ * @param schoolId - Schulen-ID
+ * @param excludeSubstitutionId - Optional: ID der zu ignorierenden Vertretung
+ * @returns Objekt mit conflict-Status und überlappenden Einträgen
+ */
+const checkTeacherDateTimeConflict = async (teacherId, date, startTime, endTime, schoolId, excludeSubstitutionId = null) => {
+    if (!teacherId) {
+        return { hasConflict: false, conflicts: [] };
+    }
+
+    // Wochentag aus dem Datum ermitteln
+    const dateObj = new Date(date);
+    const weekdayNum = dateObj.getDay();
+    const weekdaysMap = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 0: null, 6: null };
+    const weekday = weekdaysMap[weekdayNum];
+
+    if (!weekday) {
+        // Wochenende - es sollte keine regulären Lektionen geben
+        return { hasConflict: false, conflicts: [] };
+    }
+
+    // Überprüfe normale Stundenplan-Einträge für diesen Tag
+    let sql = `
+        SELECT DISTINCT
+            'regular' as type,
+            te.id, te.class_id, te.lesson_number, te.start_time, te.end_time,
+            c.name as class_name,
+            u.first_name, u.last_name
+        FROM timetable_entries te
+        JOIN classes c ON te.class_id = c.id
+        JOIN users u ON te.teacher_id = u.id
+        WHERE te.teacher_id = $1 
+          AND c.school_id = $2
+          AND te.weekday = $3
+          AND te.entry_type = 'lesson'
+          AND (
+              (te.start_time, te.end_time) OVERLAPS ($4::TIME, $5::TIME)
+          )
+        
+        UNION
+        
+        -- Überprüfe auch andere Vertretungen für den Lehrer am gleichen Datum
+        SELECT DISTINCT
+            'substitution' as type,
+            te.id, te.class_id, te.lesson_number, te.start_time, te.end_time,
+            c.name as class_name,
+            u.first_name, u.last_name
+        FROM substitutions sub
+        JOIN timetable_entries te ON sub.original_entry_id = te.id
+        JOIN classes c ON te.class_id = c.id
+        JOIN users u ON te.teacher_id = u.id
+        WHERE sub.substitute_teacher_id = $1
+          AND c.school_id = $2
+          AND sub.date = $6::DATE
+          AND sub.is_cancelled = false
+          AND (
+              (te.start_time, te.end_time) OVERLAPS ($4::TIME, $5::TIME)
+          )
+    `;
+    
+    const params = [teacherId, schoolId, weekday, startTime, endTime, date];
+    
+    if (excludeSubstitutionId) {
+        sql += ` AND sub.id != $${params.length + 1}`;
+        params.push(excludeSubstitutionId);
+    }
+
+    const conflicts = await getMany(sql, params);
+
+    return {
+        hasConflict: conflicts.length > 0,
+        conflicts: conflicts.map(c => ({
+            id: c.id,
+            className: c.class_name,
+            startTime: c.start_time,
+            endTime: c.end_time,
+            lessonNumber: c.lesson_number,
+            type: c.type
+        }))
+    };
+};
+
+/**
  * GET /api/admin/dashboard
  * Admin-Dashboard Übersicht
  */
@@ -253,6 +442,26 @@ router.post('/timetable', [
             if (!teacher) {
                 return res.status(400).json({ error: 'Ungültiger Lehrer für diese Schule' });
             }
+
+            // Überprüfung: Lehrer kann nicht zur gleichen Zeit in zwei Klassen unterrichten
+            const conflictCheck = await checkTeacherTimeConflict(teacherId, weekday, startTime, endTime, req.user.school_id);
+            if (conflictCheck.hasConflict) {
+                return res.status(409).json({ 
+                    error: 'Zeitkonflikt! Der Lehrer unterrichtet bereits zur gleichen Zeit in einer anderen Klasse.',
+                    conflicts: conflictCheck.conflicts
+                });
+            }
+
+            // Überprüfung: Lehrer darf dieselbe Stundennummer pro Wochentag nur einmal haben
+            if (entryType === 'lesson' || !entryType) {
+                const lessonNrConflict = await checkTeacherLessonNumberConflict(teacherId, weekday, lessonNumber, req.user.school_id);
+                if (lessonNrConflict.hasConflict) {
+                    return res.status(409).json({
+                        error: `Stundennummer-Konflikt! Der Lehrer hat am ${weekday} bereits eine ${lessonNumber}. Stunde in einer anderen Klasse.`,
+                        conflicts: lessonNrConflict.conflicts
+                    });
+                }
+            }
         }
 
         const result = await query(
@@ -279,15 +488,65 @@ router.post('/timetable', [
  */
 router.put('/timetable/:id', async (req, res) => {
     try {
-        const { teacherId, subjectId, roomId, startTime, endTime } = req.body;
+        const { teacherId, subjectId, roomId, startTime, endTime, weekday } = req.body;
 
-        if (teacherId) {
+        // Zuerst den aktuellen Eintrag abrufen
+        const currentEntry = await getOne(
+            `SELECT te.id, te.teacher_id, te.weekday, te.lesson_number, te.start_time, te.end_time, te.class_id, te.entry_type
+             FROM timetable_entries te
+             JOIN classes c ON te.class_id = c.id
+             WHERE te.id = $1 AND c.school_id = $2`,
+            [req.params.id, req.user.school_id]
+        );
+
+        if (!currentEntry) {
+            return res.status(404).json({ error: 'Stunde nicht gefunden' });
+        }
+
+        // Wenn Lehrer geändert wird, auf Konflikte überprüfen
+        if (teacherId && teacherId !== currentEntry.teacher_id) {
             const teacher = await getOne(
                 `SELECT id FROM users WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
                 [teacherId, req.user.school_id]
             );
             if (!teacher) {
                 return res.status(400).json({ error: 'Ungültiger Lehrer für diese Schule' });
+            }
+
+            // Zeitkonflikt-Check mit dem neuen Lehrer (excludeEntryId verwendet, um den aktuellen Eintrag zu ignorieren)
+            const conflictCheck = await checkTeacherTimeConflict(
+                teacherId, 
+                weekday || currentEntry.weekday, 
+                startTime || currentEntry.start_time, 
+                endTime || currentEntry.end_time, 
+                req.user.school_id,
+                req.params.id
+            );
+            if (conflictCheck.hasConflict) {
+                return res.status(409).json({ 
+                    error: 'Zeitkonflikt! Der Lehrer unterrichtet bereits zur gleichen Zeit in einer anderen Klasse.',
+                    conflicts: conflictCheck.conflicts
+                });
+            }
+
+            // Stundennummer-Duplikat-Check: Lehrer darf dieselbe Stundennummer pro Wochentag nur einmal haben
+            const effectiveEntryType = currentEntry.entry_type;
+            if (effectiveEntryType === 'lesson') {
+                const effectiveWeekday = weekday || currentEntry.weekday;
+                const effectiveLessonNumber = currentEntry.lesson_number;
+                const lessonNrConflict = await checkTeacherLessonNumberConflict(
+                    teacherId,
+                    effectiveWeekday,
+                    effectiveLessonNumber,
+                    req.user.school_id,
+                    req.params.id
+                );
+                if (lessonNrConflict.hasConflict) {
+                    return res.status(409).json({
+                        error: `Stundennummer-Konflikt! Der Lehrer hat am ${effectiveWeekday} bereits eine ${effectiveLessonNumber}. Stunde in einer anderen Klasse.`,
+                        conflicts: lessonNrConflict.conflicts
+                    });
+                }
             }
         }
 
@@ -349,7 +608,7 @@ router.post('/substitution', [
 
         // Safety: ensure original timetable entry belongs to this school
         const original = await getOne(
-            `SELECT te.id
+            `SELECT te.id, te.start_time, te.end_time
              FROM timetable_entries te
              JOIN classes c ON te.class_id = c.id
              WHERE te.id = $1 AND c.school_id = $2`,
@@ -367,6 +626,21 @@ router.post('/substitution', [
             );
             if (!teacher) {
                 return res.status(400).json({ error: 'Ungültiger Vertretungslehrer für diese Schule' });
+            }
+
+            // Überprüfung: Lehrer kann nicht zur gleichen Zeit in zwei Klassen unterrichten
+            const conflictCheck = await checkTeacherDateTimeConflict(
+                substituteTeacherId, 
+                date, 
+                original.start_time, 
+                original.end_time, 
+                req.user.school_id
+            );
+            if (conflictCheck.hasConflict) {
+                return res.status(409).json({ 
+                    error: 'Zeitkonflikt! Der Vertretungslehrer unterrichtet bereits zur gleichen Zeit.',
+                    conflicts: conflictCheck.conflicts
+                });
             }
         }
 
@@ -391,13 +665,44 @@ router.put('/substitution/:id', async (req, res) => {
     try {
         const { substituteTeacherId, substituteSubjectId, substituteRoomId, reason, noteForStudents, isCancelled } = req.body;
 
-        if (substituteTeacherId) {
+        // Zuerst die aktuelle Vertretung abrufen
+        const currentSubstitution = await getOne(
+            `SELECT sub.id, sub.date, sub.substitute_teacher_id, te.start_time, te.end_time
+             FROM substitutions sub
+             JOIN timetable_entries te ON sub.original_entry_id = te.id
+             JOIN classes c ON te.class_id = c.id
+             WHERE sub.id = $1 AND c.school_id = $2`,
+            [req.params.id, req.user.school_id]
+        );
+
+        if (!currentSubstitution) {
+            return res.status(404).json({ error: 'Vertretung nicht gefunden' });
+        }
+
+        // Wenn Lehrer geändert wird, auf Zeitkonflikte überprüfen
+        if (substituteTeacherId && substituteTeacherId !== currentSubstitution.substitute_teacher_id) {
             const teacher = await getOne(
                 `SELECT id FROM users WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
                 [substituteTeacherId, req.user.school_id]
             );
             if (!teacher) {
                 return res.status(400).json({ error: 'Ungültiger Vertretungslehrer für diese Schule' });
+            }
+
+            // Zeitkonflikt-Check mit dem neuen Lehrer (excludeSubstitutionId verwendet, um die aktuelle Vertretung zu ignorieren)
+            const conflictCheck = await checkTeacherDateTimeConflict(
+                substituteTeacherId, 
+                currentSubstitution.date,
+                currentSubstitution.start_time, 
+                currentSubstitution.end_time, 
+                req.user.school_id,
+                req.params.id
+            );
+            if (conflictCheck.hasConflict) {
+                return res.status(409).json({ 
+                    error: 'Zeitkonflikt! Der Vertretungslehrer unterrichtet bereits zur gleichen Zeit.',
+                    conflicts: conflictCheck.conflicts
+                });
             }
         }
 

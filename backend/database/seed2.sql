@@ -392,6 +392,31 @@ BEGIN
         'Bauchschmerzen',
         'pending';
 
+    -- =====================================================
+    -- KONFLIKT-BEREINIGUNG: Lehrer dürfen dieselbe Stundennummer
+    -- pro Wochentag nur einmal belegen (in einer Klasse).
+    -- Priorität: Klasse wo Lehrer Klassenlehrer ist, sonst alphabetisch.
+    -- =====================================================
+    WITH ranked AS (
+        SELECT
+            te.id,
+            ROW_NUMBER() OVER (
+                PARTITION BY te.teacher_id, te.weekday, te.lesson_number
+                ORDER BY
+                    CASE WHEN c.class_teacher_id = te.teacher_id THEN 0 ELSE 1 END,
+                    c.name ASC
+            ) AS rn
+        FROM timetable_entries te
+        JOIN classes c ON te.class_id = c.id
+        WHERE te.teacher_id IS NOT NULL
+          AND te.entry_type = 'lesson'
+          AND c.school_id = v_school_id
+    )
+    UPDATE timetable_entries
+    SET teacher_id = NULL
+    WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
     RAISE NOTICE '✅ Seed-Daten Teil 2 eingefügt (Stundenpläne 1b, 2b, 3a, 3b + Extras)';
+    RAISE NOTICE '✅ Lehrer-Zeitkonflikte automatisch bereinigt.';
 
 END $$;
