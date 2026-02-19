@@ -10,6 +10,14 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
 </head>
 <body>
+    <!-- Lehrer-Trigger: Schwarzer Bildschirm -->
+    <div id="trigger-overlay" class="trigger-overlay trigger-overlay--hidden" aria-live="assertive" role="alert">
+        <div class="trigger-overlay__content">
+            <p class="trigger-overlay__message">Du bist eingeloggt</p>
+            <p class="trigger-overlay__hint">Richte deinen Blick wieder nach vorne,<br>um nichts zu verpassen</p>
+        </div>
+    </div>
+
     <div id="app">
         <!-- Wird durch JavaScript geladen -->
         <div class="loading-screen">
@@ -24,5 +32,6 @@
     <script src="js/router.js"></script>
     <script src="js/components.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/trigger.js"></script>
 </body>
 </html>
