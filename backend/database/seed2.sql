@@ -167,44 +167,9 @@ BEGIN
     (v_class_3a, v_teacher_fischer, v_sub_werken, v_room_werkraum, 'Fr', 4, '10:45', '11:30', 'lesson');
 
     -- =====================================================
-    -- STUNDENPLAN Klasse 3b (Fr. Müller ist Klassenlehrerin)
-    -- Bayern Kl. 3: DE:5 MA:5 HSU:3 SP:3 MU:2 KU:1 EN:2 RE:2 WG:1
-    -- Hofmann unterrichtet EN/RE/WG (wird in seed3 hinzugefügt)
+    -- STUNDENPLAN Klasse 3b
+    -- Wird vollständig in seed3.sql definiert (Hofmann EN/RE/WG).
     -- =====================================================
-    INSERT INTO timetable_entries (class_id, teacher_id, subject_id, room_id, weekday, lesson_number, start_time, end_time, entry_type) VALUES
-    -- Montag: Doppelstunde Mathe am Morgen, dann Sport + Kunst + Deutsch
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,     v_room_106, 'Mo', 1, '08:00', '08:45', 'lesson'),
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,     v_room_106, 'Mo', 2, '08:50', '09:35', 'lesson'),
-    (v_class_3b, NULL,              NULL,             NULL,       'Mo', 0, '09:35', '09:55', 'break'),
-    (v_class_3b, v_teacher_fischer, v_sub_sport,     v_room_turnhalle, 'Mo', 3, '09:55', '10:40', 'lesson'),
-    (v_class_3b, v_teacher_braun,   v_sub_kunst,     v_room_106, 'Mo', 4, '10:45', '11:30', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_deutsch,   v_room_106, 'Mo', 5, '11:35', '12:20', 'lesson'),
-    -- Dienstag: Mathe + Deutsch + HSU + Musik + Englisch
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,     v_room_106, 'Di', 1, '08:00', '08:45', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_deutsch,   v_room_106, 'Di', 2, '08:50', '09:35', 'lesson'),
-    (v_class_3b, NULL,              NULL,             NULL,       'Di', 0, '09:35', '09:55', 'break'),
-    (v_class_3b, v_teacher_mueller, v_sub_hsu,       v_room_106, 'Di', 3, '09:55', '10:40', 'lesson'),
-    (v_class_3b, v_teacher_braun,   v_sub_musik,     v_room_musikraum, 'Di', 4, '10:45', '11:30', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_englisch,  v_room_106, 'Di', 5, '11:35', '12:20', 'lesson'),
-    -- Mittwoch (kurz): Deutsch + Englisch + HSU + Religion
-    (v_class_3b, v_teacher_mueller, v_sub_deutsch,   v_room_106, 'Mi', 1, '08:00', '08:45', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_englisch,  v_room_106, 'Mi', 2, '08:50', '09:35', 'lesson'),
-    (v_class_3b, NULL,              NULL,             NULL,       'Mi', 0, '09:35', '09:55', 'break'),
-    (v_class_3b, v_teacher_mueller, v_sub_hsu,       v_room_106, 'Mi', 3, '09:55', '10:40', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_religion,  v_room_106, 'Mi', 4, '10:45', '11:30', 'lesson'),
-    -- Donnerstag: Mathe + Deutsch + Sport + HSU + Religion
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,     v_room_106, 'Do', 1, '08:00', '08:45', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_deutsch,   v_room_106, 'Do', 2, '08:50', '09:35', 'lesson'),
-    (v_class_3b, NULL,              NULL,             NULL,       'Do', 0, '09:35', '09:55', 'break'),
-    (v_class_3b, v_teacher_fischer, v_sub_sport,     v_room_turnhalle, 'Do', 3, '09:55', '10:40', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_hsu,       v_room_106, 'Do', 4, '10:45', '11:30', 'lesson'),
-    (v_class_3b, v_teacher_mueller, v_sub_religion,  v_room_106, 'Do', 5, '11:35', '12:20', 'lesson'),
-    -- Freitag (kurz): Deutsch + Sport + Musik + Werken
-    (v_class_3b, v_teacher_mueller, v_sub_deutsch,   v_room_106, 'Fr', 1, '08:00', '08:45', 'lesson'),
-    (v_class_3b, v_teacher_fischer, v_sub_sport,     v_room_turnhalle, 'Fr', 2, '08:50', '09:35', 'lesson'),
-    (v_class_3b, NULL,              NULL,             NULL,       'Fr', 0, '09:35', '09:55', 'break'),
-    (v_class_3b, v_teacher_braun,   v_sub_musik,     v_room_musikraum, 'Fr', 3, '09:55', '10:40', 'lesson'),
-    (v_class_3b, v_teacher_fischer, v_sub_werken,    v_room_werkraum,  'Fr', 4, '10:45', '11:30', 'lesson');
 
     -- =====================================================
     -- ZUSÄTZLICHE UNTERRICHTSINHALTE (realistischer)

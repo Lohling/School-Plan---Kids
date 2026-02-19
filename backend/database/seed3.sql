@@ -115,21 +115,30 @@ BEGIN
     -- =====================================================
     v_room_108 := uuid_generate_v4();
     INSERT INTO rooms (id, school_id, name, building, capacity)
-    VALUES (v_room_108, v_school_id, 'Raum 108', 'Neubau', 28);
+    VALUES (v_room_108, v_school_id, 'Raum 108', 'Neubau', 28)
+    ON CONFLICT DO NOTHING;
+    -- Falls Raum bereits existiert, ID neu laden
+    SELECT id INTO v_room_108 FROM rooms WHERE name = 'Raum 108' AND school_id = v_school_id;
 
     -- =====================================================
     -- NEUE LEHRERIN: Eva Hofmann (EN, RE, WG)
     -- =====================================================
     v_teacher_hofmann := uuid_generate_v4();
     INSERT INTO users (id, school_id, email, password_hash, first_name, last_name, role, avatar_emoji)
-    VALUES (v_teacher_hofmann, v_school_id, 'hofmann@schule.de', v_pw_hash, 'Eva', 'Hofmann', 'teacher', '🌍');
+    VALUES (v_teacher_hofmann, v_school_id, 'hofmann@schule.de', v_pw_hash, 'Eva', 'Hofmann', 'teacher', '🌍')
+    ON CONFLICT (email) DO NOTHING;
+    -- Falls bereits vorhanden, UUID aus DB laden
+    SELECT id INTO v_teacher_hofmann FROM users WHERE email = 'hofmann@schule.de';
 
     -- =====================================================
     -- NEUE KLASSE 4b (Klassenlehrerin: Hofmann)
     -- =====================================================
     v_class_4b := uuid_generate_v4();
     INSERT INTO classes (id, school_id, name, grade_level, school_year, class_teacher_id)
-    VALUES (v_class_4b, v_school_id, '4b', 4, '2025/2026', v_teacher_hofmann);
+    VALUES (v_class_4b, v_school_id, '4b', 4, '2025/2026', v_teacher_hofmann)
+    ON CONFLICT DO NOTHING;
+    -- Falls bereits vorhanden, ID aus DB laden
+    SELECT id INTO v_class_4b FROM classes WHERE name = '4b' AND school_id = v_school_id;
 
     -- =====================================================
     -- VOLLSTÄNDIGE teacher_classes (alle fehlenden ergänzt)
