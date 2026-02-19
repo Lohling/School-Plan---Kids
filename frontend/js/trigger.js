@@ -11,46 +11,22 @@ const Trigger = (() => {
     const POLL_INTERVAL_MS = 1000;
 
     let pollTimer      = null;
-    let barTimer       = null;
-    let countdownActive = false; // Wird true, sobald der Countdown einmalig gestartet wurde
+    let countdownActive = false;
 
     const overlay = document.getElementById('trigger-overlay');
-    const bar     = document.getElementById('trigger-overlay-bar');
 
     // --------------------------------------------------
-    // Overlay sofort beim Laden anzeigen (statisch, kein Balken)
+    // Overlay sofort beim Laden anzeigen (statisch)
     // --------------------------------------------------
     function showOverlayStatic() {
-        bar.style.transition = 'none';
-        bar.style.width = '0%'; // Balken versteckt bis Countdown startet
         overlay.classList.remove('trigger-overlay--hidden');
         overlay.classList.add('trigger-overlay--visible');
     }
 
     // --------------------------------------------------
-    // Countdown-Balken starten (einmalig)
-    // --------------------------------------------------
-    function startCountdown(remainingMs) {
-        if (countdownActive) return;
-        countdownActive = true;
-
-        // Balken erscheint und läuft in remainingMs bis auf 0%
-        bar.style.transition = 'none';
-        bar.style.width = '100%';
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                bar.style.transition = `width ${remainingMs}ms linear`;
-                bar.style.width = '0%';
-            });
-        });
-    }
-
-    // --------------------------------------------------
-    // Overlay ausblenden (dauerhaft – aber Polling läuft weiter für Reset)
+    // Overlay ausblenden
     // --------------------------------------------------
     function hideOverlay() {
-        clearTimeout(barTimer);
         overlay.classList.remove('trigger-overlay--visible');
         overlay.classList.add('trigger-overlay--hidden');
         countdownActive = false;
@@ -71,9 +47,6 @@ const Trigger = (() => {
                 if (overlay.classList.contains('trigger-overlay--hidden')) {
                     showOverlayStatic();
                     countdownActive = false;
-                }
-                if (data.remainingMs !== null && !countdownActive) {
-                    startCountdown(data.remainingMs);
                 }
             } else {
                 // Freigegeben → Overlay verstecken
@@ -103,5 +76,5 @@ const Trigger = (() => {
         start();
     }
 
-    return { stop: () => { clearInterval(pollTimer); clearTimeout(barTimer); } };
+    return { stop: () => { clearInterval(pollTimer); } };
 })();

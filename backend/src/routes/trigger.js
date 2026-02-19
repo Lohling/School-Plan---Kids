@@ -20,7 +20,7 @@ let triggerState = {
     countdownStartedAt: null,  // null = Countdown noch nicht gestartet
 };
 
-const COUNTDOWN_DURATION_MS = 10 * 1000; // 10 Sekunden
+const COUNTDOWN_DURATION_MS = 55300; // 55,3 Sekunden
 
 // -------------------------------------------------------
 // GET /api/trigger/status
