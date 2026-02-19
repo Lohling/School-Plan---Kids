@@ -238,6 +238,23 @@ router.post('/timetable', [
 
         const { classId, teacherId, subjectId, roomId, weekday, lessonNumber, startTime, endTime, entryType } = req.body;
 
+        // Safety: ensure class belongs to this admin's school
+        const cls = await getOne('SELECT id FROM classes WHERE id = $1 AND school_id = $2', [classId, req.user.school_id]);
+        if (!cls) {
+            return res.status(404).json({ error: 'Klasse nicht gefunden' });
+        }
+
+        // Safety: ensure teacher belongs to this school (if provided)
+        if (teacherId) {
+            const teacher = await getOne(
+                `SELECT id FROM users WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
+                [teacherId, req.user.school_id]
+            );
+            if (!teacher) {
+                return res.status(400).json({ error: 'Ungültiger Lehrer für diese Schule' });
+            }
+        }
+
         const result = await query(
             `INSERT INTO timetable_entries (class_id, teacher_id, subject_id, room_id, weekday, lesson_number, start_time, end_time, entry_type)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -264,12 +281,27 @@ router.put('/timetable/:id', async (req, res) => {
     try {
         const { teacherId, subjectId, roomId, startTime, endTime } = req.body;
 
-        await query(
-            `UPDATE timetable_entries 
+        if (teacherId) {
+            const teacher = await getOne(
+                `SELECT id FROM users WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
+                [teacherId, req.user.school_id]
+            );
+            if (!teacher) {
+                return res.status(400).json({ error: 'Ungültiger Lehrer für diese Schule' });
+            }
+        }
+
+        const result = await query(
+            `UPDATE timetable_entries te
              SET teacher_id = $1, subject_id = $2, room_id = $3, start_time = $4, end_time = $5, updated_at = NOW()
-             WHERE id = $6`,
-            [teacherId || null, subjectId || null, roomId || null, startTime, endTime, req.params.id]
+             FROM classes c
+             WHERE te.id = $6 AND te.class_id = c.id AND c.school_id = $7`,
+            [teacherId || null, subjectId || null, roomId || null, startTime, endTime, req.params.id, req.user.school_id]
         );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Stunde nicht gefunden' });
+        }
 
         res.json({ success: true, message: 'Stunde aktualisiert' });
     } catch (error) {
@@ -283,7 +315,16 @@ router.put('/timetable/:id', async (req, res) => {
  */
 router.delete('/timetable/:id', async (req, res) => {
     try {
-        await query('DELETE FROM timetable_entries WHERE id = $1', [req.params.id]);
+        const result = await query(
+            `DELETE FROM timetable_entries te
+             USING classes c
+             WHERE te.id = $1 AND te.class_id = c.id AND c.school_id = $2`,
+            [req.params.id, req.user.school_id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Stunde nicht gefunden' });
+        }
         res.json({ success: true, message: 'Stunde gelöscht' });
     } catch (error) {
         res.status(500).json({ error: 'Fehler beim Löschen' });
@@ -306,6 +347,29 @@ router.post('/substitution', [
 
         const { originalEntryId, substituteTeacherId, substituteSubjectId, substituteRoomId, date, reason, noteForStudents, isCancelled } = req.body;
 
+        // Safety: ensure original timetable entry belongs to this school
+        const original = await getOne(
+            `SELECT te.id
+             FROM timetable_entries te
+             JOIN classes c ON te.class_id = c.id
+             WHERE te.id = $1 AND c.school_id = $2`,
+            [originalEntryId, req.user.school_id]
+        );
+        if (!original) {
+            return res.status(404).json({ error: 'Original-Stunde nicht gefunden' });
+        }
+
+        // Safety: ensure substitute teacher belongs to this school (if provided)
+        if (substituteTeacherId) {
+            const teacher = await getOne(
+                `SELECT id FROM users WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
+                [substituteTeacherId, req.user.school_id]
+            );
+            if (!teacher) {
+                return res.status(400).json({ error: 'Ungültiger Vertretungslehrer für diese Schule' });
+            }
+        }
+
         await query(
             `INSERT INTO substitutions (original_entry_id, substitute_teacher_id, substitute_subject_id, substitute_room_id, date, reason, note_for_students, is_cancelled, created_by)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
@@ -327,14 +391,30 @@ router.put('/substitution/:id', async (req, res) => {
     try {
         const { substituteTeacherId, substituteSubjectId, substituteRoomId, reason, noteForStudents, isCancelled } = req.body;
 
-        await query(
-            `UPDATE substitutions 
+        if (substituteTeacherId) {
+            const teacher = await getOne(
+                `SELECT id FROM users WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
+                [substituteTeacherId, req.user.school_id]
+            );
+            if (!teacher) {
+                return res.status(400).json({ error: 'Ungültiger Vertretungslehrer für diese Schule' });
+            }
+        }
+
+        const result = await query(
+            `UPDATE substitutions sub
              SET substitute_teacher_id = $1, substitute_subject_id = $2, substitute_room_id = $3,
                  reason = $4, note_for_students = $5, is_cancelled = $6
-             WHERE id = $7`,
+             FROM timetable_entries te
+             JOIN classes c ON te.class_id = c.id
+             WHERE sub.id = $7 AND sub.original_entry_id = te.id AND c.school_id = $8`,
             [substituteTeacherId || null, substituteSubjectId || null, substituteRoomId || null,
-             reason || null, noteForStudents || null, isCancelled || false, req.params.id]
+             reason || null, noteForStudents || null, isCancelled || false, req.params.id, req.user.school_id]
         );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Vertretung nicht gefunden' });
+        }
 
         res.json({ success: true, message: 'Vertretung aktualisiert' });
     } catch (error) {
@@ -348,7 +428,16 @@ router.put('/substitution/:id', async (req, res) => {
  */
 router.delete('/substitution/:id', async (req, res) => {
     try {
-        await query('DELETE FROM substitutions WHERE id = $1', [req.params.id]);
+        const result = await query(
+            `DELETE FROM substitutions sub
+             USING timetable_entries te, classes c
+             WHERE sub.id = $1 AND sub.original_entry_id = te.id AND te.class_id = c.id AND c.school_id = $2`,
+            [req.params.id, req.user.school_id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Vertretung nicht gefunden' });
+        }
         res.json({ success: true, message: 'Vertretung gelöscht' });
     } catch (error) {
         res.status(500).json({ error: 'Fehler beim Löschen' });

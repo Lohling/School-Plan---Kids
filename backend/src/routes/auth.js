@@ -177,4 +177,48 @@ router.post('/change-password', authenticate, [
     }
 });
 
+/**
+ * GET /api/auth/random-user/:role
+ * Gibt einen zufälligen Benutzer einer bestimmten Rolle zurück
+ * Nur für Demo/Test-Zwecke
+ */
+router.get('/random-user/:role', async (req, res) => {
+    try {
+        const { role } = req.params;
+        const validRoles = ['student', 'parent', 'teacher'];
+
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ error: 'Ungültige Rolle' });
+        }
+
+        // Zufälligen Benutzer der Rolle holen
+        const randomUser = await getOne(
+            `SELECT email, first_name, last_name, role, avatar_emoji
+             FROM users 
+             WHERE role = $1 AND is_active = true
+             ORDER BY RANDOM() 
+             LIMIT 1`,
+            [role]
+        );
+
+        if (!randomUser) {
+            return res.status(404).json({ error: 'Keine Benutzer dieser Rolle gefunden' });
+        }
+
+        res.json({
+            success: true,
+            user: {
+                email: randomUser.email,
+                firstName: randomUser.first_name,
+                lastName: randomUser.last_name,
+                role: randomUser.role,
+                avatar: randomUser.avatar_emoji,
+            },
+        });
+    } catch (error) {
+        console.error('Random user Error:', error);
+        res.status(500).json({ error: 'Fehler beim Abrufen des zufälligen Benutzers' });
+    }
+});
+
 module.exports = router;

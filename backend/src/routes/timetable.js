@@ -8,6 +8,87 @@ const router = express.Router();
 const { getOne, getMany, query } = require('../config/database');
 const { authenticate, requireTeacherOrAdmin, requireAdmin } = require('../middleware/auth');
 
+const getClassAccessForUser = async (user, classId) => {
+    // Ensure class belongs to user's school
+    const cls = await getOne(
+        'SELECT id, school_id FROM classes WHERE id = $1',
+        [classId]
+    );
+
+    if (!cls) {
+        return { ok: false, status: 404, error: 'Klasse nicht gefunden' };
+    }
+
+    if (cls.school_id !== user.school_id) {
+        // Avoid leaking existence of classes across schools
+        return { ok: false, status: 404, error: 'Klasse nicht gefunden' };
+    }
+
+    // Admin/Teacher can access any class in their school
+    if (user.role === 'admin' || user.role === 'teacher') {
+        return { ok: true };
+    }
+
+    // Student: must be assigned to this class
+    if (user.role === 'student') {
+        const membership = await getOne(
+            'SELECT 1 FROM student_classes WHERE student_id = $1 AND class_id = $2 LIMIT 1',
+            [user.id, classId]
+        );
+        if (!membership) {
+            return { ok: false, status: 403, error: 'Keine Berechtigung für diese Klasse' };
+        }
+        return { ok: true };
+    }
+
+    // Parent: must have a child assigned to this class
+    if (user.role === 'parent') {
+        const membership = await getOne(
+            `SELECT 1
+             FROM parent_students ps
+             JOIN student_classes sc ON ps.student_id = sc.student_id
+             WHERE ps.parent_id = $1 AND sc.class_id = $2
+             LIMIT 1`,
+            [user.id, classId]
+        );
+        if (!membership) {
+            return { ok: false, status: 403, error: 'Keine Berechtigung für diese Klasse' };
+        }
+        return { ok: true };
+    }
+
+    return { ok: false, status: 403, error: 'Keine Berechtigung' };
+};
+
+const getPrimaryClassIdForUser = async (user) => {
+    if (user.role === 'student') {
+        const row = await getOne(
+            `SELECT sc.class_id
+             FROM student_classes sc
+             JOIN classes c ON sc.class_id = c.id
+             WHERE sc.student_id = $1 AND c.school_id = $2
+             LIMIT 1`,
+            [user.id, user.school_id]
+        );
+        return row?.class_id || null;
+    }
+
+    if (user.role === 'parent') {
+        const row = await getOne(
+            `SELECT sc.class_id
+             FROM parent_students ps
+             JOIN student_classes sc ON ps.student_id = sc.student_id
+             JOIN classes c ON sc.class_id = c.id
+             WHERE ps.parent_id = $1 AND c.school_id = $2
+             LIMIT 1`,
+            [user.id, user.school_id]
+        );
+        return row?.class_id || null;
+    }
+
+    return null;
+};
+
 /**
  * GET /api/timetable/class/:classId
  * Stundenplan einer Klasse abrufen
@@ -17,6 +98,11 @@ router.get('/class/:classId', authenticate, async (req, res) => {
         const { classId } = req.params;
         const { weekday } = req.query;
 
+        const access = await getClassAccessForUser(req.user, classId);
+        if (!access.ok) {
+            return res.status(access.status).json({ error: access.error });
+        }
+
         let sql = `
             SELECT 
                 te.id, te.weekday, te.lesson_number, te.start_time, te.end_time, te.entry_type,
@@ -24,16 +110,17 @@ router.get('/class/:classId', authenticate, async (req, res) => {
                 r.name as room_name,
                 u.first_name as teacher_first_name, u.last_name as teacher_last_name
             FROM timetable_entries te
+            JOIN classes c ON te.class_id = c.id
             LEFT JOIN subjects s ON te.subject_id = s.id
             LEFT JOIN rooms r ON te.room_id = r.id
             LEFT JOIN users u ON te.teacher_id = u.id
-            WHERE te.class_id = $1
+            WHERE te.class_id = $1 AND c.school_id = $2
         `;
         
-        const params = [classId];
+        const params = [classId, req.user.school_id];
         
         if (weekday) {
-            sql += ' AND te.weekday = $2';
+            sql += ' AND te.weekday = $3';
             params.push(weekday);
         }
         
@@ -79,6 +166,18 @@ router.get('/teacher/:teacherId', authenticate, requireTeacherOrAdmin, async (re
     try {
         const { teacherId } = req.params;
 
+        // Only allow access to teachers from the same school
+        const teacher = await getOne(
+            `SELECT id
+             FROM users
+             WHERE id = $1 AND role = 'teacher' AND school_id = $2 AND is_active = true`,
+            [teacherId, req.user.school_id]
+        );
+
+        if (!teacher) {
+            return res.status(404).json({ error: 'Lehrer nicht gefunden' });
+        }
+
         // Prüfen ob Lehrer selbst oder Admin
         if (req.user.role === 'teacher' && req.user.id !== teacherId) {
             // Lehrer können auch Kollegen-Pläne sehen
@@ -94,9 +193,9 @@ router.get('/teacher/:teacherId', authenticate, requireTeacherOrAdmin, async (re
             LEFT JOIN subjects s ON te.subject_id = s.id
             LEFT JOIN rooms r ON te.room_id = r.id
             LEFT JOIN classes c ON te.class_id = c.id
-            WHERE te.teacher_id = $1
+            WHERE te.teacher_id = $1 AND c.school_id = $2
             ORDER BY te.weekday, te.start_time
-        `, [teacherId]);
+        `, [teacherId, req.user.school_id]);
 
         // Gruppiere nach Wochentag und formatiere
         const timetable = {};
@@ -134,8 +233,12 @@ router.get('/my', authenticate, async (req, res) => {
         if (role === 'student') {
             // Schüler: Klasse finden und deren Stundenplan
             const studentClass = await getOne(
-                `SELECT class_id FROM student_classes WHERE student_id = $1 LIMIT 1`,
-                [id]
+                `SELECT sc.class_id
+                 FROM student_classes sc
+                 JOIN classes c ON sc.class_id = c.id
+                 WHERE sc.student_id = $1 AND c.school_id = $2
+                 LIMIT 1`,
+                [id, req.user.school_id]
             );
 
             if (!studentClass) {
@@ -150,12 +253,13 @@ router.get('/my', authenticate, async (req, res) => {
                     r.name as room_name,
                     u.first_name as teacher_first_name, u.last_name as teacher_last_name
                 FROM timetable_entries te
+                JOIN classes c ON te.class_id = c.id
                 LEFT JOIN subjects s ON te.subject_id = s.id
                 LEFT JOIN rooms r ON te.room_id = r.id
                 LEFT JOIN users u ON te.teacher_id = u.id
-                WHERE te.class_id = $1
+                WHERE te.class_id = $1 AND c.school_id = $2
                 ORDER BY te.weekday, te.start_time
-            `, [studentClass.class_id]);
+            `, [studentClass.class_id, req.user.school_id]);
 
             const timetable = {};
             entries.forEach(entry => {
@@ -283,8 +387,10 @@ router.get('/my', authenticate, async (req, res) => {
                 `SELECT ps.student_id, sc.class_id 
                  FROM parent_students ps
                  JOIN student_classes sc ON ps.student_id = sc.student_id
-                 WHERE ps.parent_id = $1 LIMIT 1`,
-                [id]
+                 JOIN classes c ON sc.class_id = c.id
+                 WHERE ps.parent_id = $1 AND c.school_id = $2
+                 LIMIT 1`,
+                [id, req.user.school_id]
             );
 
             if (!child) {
@@ -298,12 +404,13 @@ router.get('/my', authenticate, async (req, res) => {
                     r.name as room_name,
                     u.first_name as teacher_first_name, u.last_name as teacher_last_name
                 FROM timetable_entries te
+                JOIN classes c ON te.class_id = c.id
                 LEFT JOIN subjects s ON te.subject_id = s.id
                 LEFT JOIN rooms r ON te.room_id = r.id
                 LEFT JOIN users u ON te.teacher_id = u.id
-                WHERE te.class_id = $1
+                WHERE te.class_id = $1 AND c.school_id = $2
                 ORDER BY te.weekday, te.start_time
-            `, [child.class_id]);
+            `, [child.class_id, req.user.school_id]);
 
             const timetable = {};
             entries.forEach(entry => {
@@ -350,6 +457,24 @@ router.get('/substitutions', authenticate, async (req, res) => {
         const { date, classId } = req.query;
         const targetDate = date || new Date().toISOString().split('T')[0];
 
+        let effectiveClassId = classId || null;
+
+        // For students/parents always scope to their own (primary) class
+        if (req.user.role === 'student' || req.user.role === 'parent') {
+            effectiveClassId = await getPrimaryClassIdForUser(req.user);
+            if (!effectiveClassId) {
+                return res.json({ substitutions: [], date: targetDate, message: 'Keine Klasse zugewiesen' });
+            }
+        }
+
+        // For teachers/admin: if classId provided, ensure it's within their school
+        if ((req.user.role === 'teacher' || req.user.role === 'admin') && effectiveClassId) {
+            const access = await getClassAccessForUser(req.user, effectiveClassId);
+            if (!access.ok) {
+                return res.status(access.status).json({ error: access.error });
+            }
+        }
+
         let sql = `
             SELECT 
                 sub.id, sub.date, sub.is_cancelled, sub.note_for_students,
@@ -360,7 +485,8 @@ router.get('/substitutions', authenticate, async (req, res) => {
                 sub_t.first_name || ' ' || sub_t.last_name as substitute_teacher,
                 orig_r.name as original_room,
                 sub_r.name as substitute_room,
-                c.name as class_name
+                c.name as class_name,
+                te.class_id
             FROM substitutions sub
             JOIN timetable_entries te ON sub.original_entry_id = te.id
             JOIN classes c ON te.class_id = c.id
@@ -370,14 +496,14 @@ router.get('/substitutions', authenticate, async (req, res) => {
             LEFT JOIN users sub_t ON sub.substitute_teacher_id = sub_t.id
             LEFT JOIN rooms orig_r ON te.room_id = orig_r.id
             LEFT JOIN rooms sub_r ON sub.substitute_room_id = sub_r.id
-            WHERE sub.date = $1
+            WHERE sub.date = $1 AND c.school_id = $2
         `;
 
-        const params = [targetDate];
+        const params = [targetDate, req.user.school_id];
 
-        if (classId) {
-            sql += ' AND te.class_id = $2';
-            params.push(classId);
+        if (effectiveClassId) {
+            sql += ' AND te.class_id = $3';
+            params.push(effectiveClassId);
         }
 
         sql += ' ORDER BY c.name, te.lesson_number';
@@ -400,8 +526,11 @@ router.post('/content', authenticate, requireTeacherOrAdmin, async (req, res) =>
 
         // Prüfen ob der Lehrer diese Stunde unterrichtet
         const entry = await getOne(
-            'SELECT teacher_id FROM timetable_entries WHERE id = $1',
-            [timetableEntryId]
+            `SELECT te.teacher_id, te.class_id
+             FROM timetable_entries te
+             JOIN classes c ON te.class_id = c.id
+             WHERE te.id = $1 AND c.school_id = $2`,
+            [timetableEntryId, req.user.school_id]
         );
 
         if (!entry) {
@@ -446,6 +575,25 @@ router.post('/content', authenticate, requireTeacherOrAdmin, async (req, res) =>
 router.get('/content/:entryId', authenticate, async (req, res) => {
     try {
         const { date } = req.query;
+
+        const entryMeta = await getOne(
+            `SELECT te.id, te.class_id
+             FROM timetable_entries te
+             JOIN classes c ON te.class_id = c.id
+             WHERE te.id = $1 AND c.school_id = $2`,
+            [req.params.entryId, req.user.school_id]
+        );
+
+        if (!entryMeta) {
+            return res.status(404).json({ error: 'Stunde nicht gefunden' });
+        }
+
+        if (req.user.role === 'student' || req.user.role === 'parent') {
+            const ownClassId = await getPrimaryClassIdForUser(req.user);
+            if (!ownClassId || ownClassId !== entryMeta.class_id) {
+                return res.status(403).json({ error: 'Keine Berechtigung für diese Stunde' });
+            }
+        }
         
         const content = await getOne(
             `SELECT lc.*, u.first_name || ' ' || u.last_name as created_by_name
