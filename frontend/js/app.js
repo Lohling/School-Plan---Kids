@@ -375,15 +375,7 @@ const App = {
                         </button>
                     </form>
                     
-                    <div class="login-roles">
-                        <span class="role-badge student">Schüler</span>
-                        <span class="role-badge parent">Eltern</span>
-                        <span class="role-badge teacher">Lehrer</span>
-                        <span class="role-badge admin">Admin</span>
-                    </div>
-
                     <div class="test-login-section">
-                        <p class="test-login-label">Schnell-Login (Zufälliger Demo-Benutzer)</p>
                         <div class="test-login-buttons">
                             <button class="test-login-btn student" onclick="App.loginRandomUser('student')">
                                 📚 Schüler (zufällig)
@@ -2339,7 +2331,7 @@ const App = {
                 </form>
             </div>
             
-            ${Auth.getRole() !== 'student' ? `
+            ${Auth.getRole() === 'admin' ? `
             <div class="card mt-lg">
                 <h3 class="mb-md">Passwort ändern</h3>
                 <form onsubmit="App.changePassword(event)">
