@@ -11,7 +11,7 @@ Ausführen:
 import requests
 import sys
 
-SERVER_URL     = 'http://localhost:2080'
+SERVER_URL     = 'https://leo-kunstsk.riccardorohling.com'
 TRIGGER_SECRET = 'trigger_secret_change_me'
 
 RESET_URL = f"{SERVER_URL.rstrip('/')}/api/trigger/reset"

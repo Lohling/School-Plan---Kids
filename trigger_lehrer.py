@@ -25,7 +25,7 @@ from pynput import keyboard
 # ║                  KONFIGURATION                       ║
 # ╚══════════════════════════════════════════════════════╝
 
-SERVER_URL     = 'http://localhost:2080'                      # ← Lokale URL (gleicher PC wie Docker)
+SERVER_URL     = 'https://leo-kunstsk.riccardorohling.com'   # ← Cloudflare Domain
 TRIGGER_SECRET = 'trigger_secret_change_me'                  # ← MUSS mit docker-compose übereinstimmen!
 TRIGGER_KEY    = keyboard.Key.space                          # ← Auslöse-Taste (Leertaste)
 
