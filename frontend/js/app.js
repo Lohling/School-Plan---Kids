@@ -376,6 +376,10 @@ const App = {
                     </form>
                     
                     <div class="test-login-section">
+                        <div class="quick-access-hint">
+                            <span class="quick-access-icon">⚡</span>
+                            <span class="quick-access-text">Schnellzugriff – direkt einloggen ohne Passwort</span>
+                        </div>
                         <div class="test-login-buttons">
                             <button class="test-login-btn student" onclick="App.loginRandomUser('student')">
                                 📚 Schüler (zufällig)
