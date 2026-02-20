@@ -1,6 +1,9 @@
-# 🏫 School Plan - Kids
+# School Plan - Kids
 
 Ein kinderfreundlicher, digitaler Vertretungsplan für Grundschulen.
+
+genaue Aufzeichungen und Beschreibung zum Projekt unter 
+   -> https://1drv.ms/o/c/e6ac48a3da56b972/IgAKDFkQRBeKSoejBImcJV-wAU5PoULeaOFgqXc0LstRbqA?e=YMVJEd
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
