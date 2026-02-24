@@ -71,9 +71,11 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Strengeres Limit für Login
+// HINWEIS: In Schulnetzwerken teilen sich alle Schüler eine IP (NAT).
+// Daher muss max hoch genug sein für gleichzeitige Klassen-Anmeldungen.
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10, // 10 Login-Versuche
+    max: 500, // 500 Login-Versuche pro IP (deckt 300 Schüler + Wiederholungsversuche ab)
     message: { error: 'Zu viele Login-Versuche. Bitte warte 15 Minuten.' },
     standardHeaders: true,
     legacyHeaders: false,

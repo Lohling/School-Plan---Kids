@@ -10,9 +10,9 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'schoolplan',
     user: process.env.DB_USER || 'schoolplan_user',
     password: process.env.DB_PASSWORD || 'secure_password_123',
-    max: 20, // Max Connections
+    max: 50,                          // Erhöht für gleichzeitige Schüler-Anmeldungen
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 5000,    // 5s statt 2s, damit Warteschlange abgebaut werden kann
 });
 
 // Verbindungstest
