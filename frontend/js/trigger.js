@@ -1,12 +1,9 @@
 /**
  * School Plan Kids - Lehrer-Trigger
- *
- * Standardverhalten:
- *   - Overlay ist beim Öffnen der Website SOFORT sichtbar (gesperrt).
- *   - Sobald der Lehrer die Leertaste drückt, startet ein 10s-Countdown.
- *   - Nach dem Countdown wird die Website dauerhaft freigegeben.
+ * DEAKTIVIERT – Website ist direkt zugänglich.
  */
 
+// Trigger deaktiviert
 const Trigger = (() => {
     const POLL_INTERVAL_MS = 1000;
 
@@ -70,11 +67,12 @@ const Trigger = (() => {
         pollTimer = setInterval(pollStatus, POLL_INTERVAL_MS);
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', start);
-    } else {
-        start();
-    }
+    // Trigger ist deaktiviert – kein Start, kein Overlay
+    // if (document.readyState === 'loading') {
+    //     document.addEventListener('DOMContentLoaded', start);
+    // } else {
+    //     start();
+    // }
 
     return { stop: () => { clearInterval(pollTimer); } };
 })();
