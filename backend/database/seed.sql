@@ -238,20 +238,24 @@ BEGIN
     (v_teacher_schmidt, v_class_2a, 'Deutsch'),
     (v_teacher_schmidt, v_class_4a, 'Mathematik'),
     (v_teacher_schmidt, v_class_4a, 'Deutsch'),
-    -- Frau Weber: Klassenlehrerin 1b, unterrichtet Deutsch & Mathe
+    -- Frau Weber: Klassenlehrerin 1b, unterrichtet Deutsch, Mathe, HSU, Sport (eigene Klasse)
     (v_teacher_weber, v_class_1b, 'Deutsch'),
     (v_teacher_weber, v_class_1b, 'Mathematik'),
+    (v_teacher_weber, v_class_1b, 'HSU'),
+    (v_teacher_weber, v_class_1b, 'Sport'),
     (v_teacher_weber, v_class_2b, 'Mathematik'),
-    -- Herr Fischer: Klassenlehrer 3a, unterrichtet Sport überall + HSU
+    -- Herr Fischer: Klassenlehrer 3a, Sport-Spezialist für 3./4. Klassen
     (v_teacher_fischer, v_class_3a, 'HSU'),
     (v_teacher_fischer, v_class_3a, 'Sport'),
-    (v_teacher_fischer, v_class_1a, 'Sport'),
-    (v_teacher_fischer, v_class_1b, 'Sport'),
-    (v_teacher_fischer, v_class_2a, 'Sport'),
+    (v_teacher_fischer, v_class_3b, 'Sport'),
     (v_teacher_fischer, v_class_4a, 'Sport'),
-    -- Frau Braun: Klassenlehrerin 2b, Musik & Kunst
+    -- Herr Schmidt: Klassenlehrer 2a + 4a; übernimmt auch Sport 1a
+    (v_teacher_schmidt, v_class_1a, 'Sport'),
+    -- Frau Braun: Klassenlehrerin 2b, Musik, Kunst, Sport + HSU (eigene Klasse)
     (v_teacher_braun, v_class_2b, 'Deutsch'),
     (v_teacher_braun, v_class_2b, 'Musik'),
+    (v_teacher_braun, v_class_2b, 'HSU'),
+    (v_teacher_braun, v_class_2b, 'Sport'),
     (v_teacher_braun, v_class_1a, 'Musik'),
     (v_teacher_braun, v_class_1b, 'Musik'),
     (v_teacher_braun, v_class_3a, 'Musik'),
@@ -310,8 +314,8 @@ BEGIN
     (v_class_1a, v_teacher_mueller, v_sub_deutsch, v_room_101, 'Di', 1, '08:00', '08:45', 'lesson'),
     (v_class_1a, v_teacher_weber, v_sub_mathe, v_room_101, 'Di', 2, '08:50', '09:35', 'lesson'),
     (v_class_1a, NULL, NULL, NULL, 'Di', 0, '09:35', '09:55', 'break'),
-    (v_class_1a, v_teacher_fischer, v_sub_sport, v_room_turnhalle, 'Di', 3, '09:55', '10:40', 'lesson'),
-    (v_class_1a, v_teacher_fischer, v_sub_sport, v_room_turnhalle, 'Di', 4, '10:45', '11:30', 'lesson'),
+    (v_class_1a, v_teacher_schmidt, v_sub_sport, v_room_turnhalle, 'Di', 3, '09:55', '10:40', 'lesson'),
+    (v_class_1a, v_teacher_schmidt, v_sub_sport, v_room_turnhalle, 'Di', 4, '10:45', '11:30', 'lesson'),
     -- Mittwoch
     (v_class_1a, v_teacher_weber, v_sub_mathe, v_room_101, 'Mi', 1, '08:00', '08:45', 'lesson'),
     (v_class_1a, v_teacher_weber, v_sub_mathe, v_room_101, 'Mi', 2, '08:50', '09:35', 'lesson'),

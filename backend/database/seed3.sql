@@ -174,16 +174,14 @@ BEGIN
     (v_teacher_weber, v_class_3a, 'Englisch')
     ON CONFLICT DO NOTHING;
 
-    -- Herr Fischer: Sport überall + WG 3a
+    -- Herr Fischer: Sport 3./4. Klassen (OHNE 2b und 4b – kein Zeitkonflikt mehr)
     INSERT INTO teacher_classes (teacher_id, class_id, subject) VALUES
     (v_teacher_fischer, v_class_3b, 'Sport'),
-    (v_teacher_fischer, v_class_2b, 'Sport'),
     (v_teacher_fischer, v_class_3a, 'Werken'),
-    (v_teacher_fischer, v_class_4a, 'Sport'),
-    (v_teacher_fischer, v_class_4b, 'Sport')
+    (v_teacher_fischer, v_class_4a, 'Sport')
     ON CONFLICT DO NOTHING;
 
-    -- Frau Braun: 2b Klassenlehrerin, Musik+Kunst überall
+    -- Frau Braun: 2b Klassenlehrerin, Musik+Kunst überall, Sport+HSU 2b (als Klassenlehrerin)
     INSERT INTO teacher_classes (teacher_id, class_id, subject) VALUES
     (v_teacher_braun, v_class_3b, 'Musik'),
     (v_teacher_braun, v_class_3b, 'Kunst'),
@@ -193,21 +191,23 @@ BEGIN
     (v_teacher_braun, v_class_2a, 'Musik'),
     (v_teacher_braun, v_class_2a, 'Kunst'),
     (v_teacher_braun, v_class_4b, 'Musik'),
-    (v_teacher_braun, v_class_4b, 'Kunst')
+    (v_teacher_braun, v_class_4b, 'Kunst'),
+    (v_teacher_braun, v_class_2b, 'Sport')
     ON CONFLICT DO NOTHING;
 
-    -- Frau Hofmann: Englisch, Religion, Werken für 3./4. Klassen
+    -- Frau Hofmann: Englisch, Religion, Werken 3./4. Klassen; Sport 4b (als Klassenlehrerin)
     INSERT INTO teacher_classes (teacher_id, class_id, subject) VALUES
     (v_teacher_hofmann, v_class_3b, 'Englisch'),
     (v_teacher_hofmann, v_class_3b, 'Religion'),
     (v_teacher_hofmann, v_class_3b, 'Werken'),
     (v_teacher_hofmann, v_class_3a, 'Religion'),
-    (v_teacher_hofmann, v_class_3a, 'Englisch'),
+    -- 3a Englisch unterrichtet Weber (kein Konflikt mit Hofmann)
     (v_teacher_hofmann, v_class_4a, 'Religion'),
     (v_teacher_hofmann, v_class_4a, 'Englisch'),
     (v_teacher_hofmann, v_class_4b, 'Englisch'),
     (v_teacher_hofmann, v_class_4b, 'Religion'),
     (v_teacher_hofmann, v_class_4b, 'Werken'),
+    (v_teacher_hofmann, v_class_4b, 'Sport'),
     (v_teacher_hofmann, v_class_2b, 'Religion')
     ON CONFLICT DO NOTHING;
 
@@ -283,8 +283,8 @@ BEGIN
     (v_class_4b, v_teacher_schmidt,  v_sub_mathe,     v_room_108,'Mo',2,'08:50','09:35','lesson'),
     (v_class_4b, NULL,               NULL,            NULL,      'Mo',0,'09:35','09:55','break'),
     (v_class_4b, v_teacher_schmidt,  v_sub_deutsch,   v_room_108,'Mo',3,'09:55','10:40','lesson'),
-    (v_class_4b, v_teacher_fischer,  v_sub_sport,     v_room_turnhalle,'Mo',4,'10:45','11:30','lesson'),
-    (v_class_4b, v_teacher_fischer,  v_sub_sport,     v_room_turnhalle,'Mo',5,'11:35','12:20','lesson'),
+    (v_class_4b, v_teacher_hofmann,  v_sub_sport,     v_room_turnhalle,'Mo',4,'10:45','11:30','lesson'),
+    (v_class_4b, v_teacher_hofmann,  v_sub_sport,     v_room_turnhalle,'Mo',5,'11:35','12:20','lesson'),
     -- DIENSTAG (5)
     (v_class_4b, v_teacher_schmidt,  v_sub_mathe,     v_room_108,'Di',1,'08:00','08:45','lesson'),
     (v_class_4b, v_teacher_schmidt,  v_sub_mathe,     v_room_108,'Di',2,'08:50','09:35','lesson'),
@@ -442,10 +442,35 @@ BEGIN
     (v_school_id, v_teacher_hofmann, 'Mo', 'grosse_pause', 'Schulhof Ost', '09:35','09:55'),
     (v_school_id, v_teacher_hofmann, 'Do', 'grosse_pause', 'Schulhof Ost', '09:35','09:55');
 
+    -- =====================================================
+    -- KONFLIKT-BEREINIGUNG (globale 2. Runde nach Seed 3)
+    -- Lehrer dürfen dieselbe Stundennummer pro Wochentag
+    -- nur einmal belegen. Priorität: eigene Klasse, sonst alphabetisch.
+    -- =====================================================
+    WITH ranked AS (
+        SELECT
+            te.id,
+            ROW_NUMBER() OVER (
+                PARTITION BY te.teacher_id, te.weekday, te.lesson_number
+                ORDER BY
+                    CASE WHEN c.class_teacher_id = te.teacher_id THEN 0 ELSE 1 END,
+                    c.name ASC
+            ) AS rn
+        FROM timetable_entries te
+        JOIN classes c ON te.class_id = c.id
+        WHERE te.teacher_id IS NOT NULL
+          AND te.entry_type = 'lesson'
+          AND c.school_id = v_school_id
+    )
+    UPDATE timetable_entries
+    SET teacher_id = NULL
+    WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
     RAISE NOTICE '✅ Seed 3 erfolgreich!';
     RAISE NOTICE '  Neue Lehrerin: Eva Hofmann  (hofmann@schule.de / test1234)';
     RAISE NOTICE '  Neue Klasse:   4b';
     RAISE NOTICE '  Neue Schüler:  33 (je 4 pro bestehender Klasse, 5 für 4b)';
     RAISE NOTICE '  Neue Eltern:   18';
     RAISE NOTICE '  3b-Stundenplan vollständig korrigiert.';
+    RAISE NOTICE '  Lehrerzeit-Konflikte (Seed 3) automatisch bereinigt.';
 END $$;

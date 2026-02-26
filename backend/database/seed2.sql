@@ -72,14 +72,14 @@ BEGIN
     (v_class_1b, v_teacher_weber, v_sub_mathe, v_room_102, 'Di', 1, '08:00', '08:45', 'lesson'),
     (v_class_1b, v_teacher_weber, v_sub_deutsch, v_room_102, 'Di', 2, '08:50', '09:35', 'lesson'),
     (v_class_1b, NULL, NULL, NULL, 'Di', 0, '09:35', '09:55', 'break'),
-    (v_class_1b, v_teacher_schmidt, v_sub_hsu, v_room_102, 'Di', 3, '09:55', '10:40', 'lesson'),
-    (v_class_1b, v_teacher_schmidt, v_sub_hsu, v_room_102, 'Di', 4, '10:45', '11:30', 'lesson'),
+    (v_class_1b, v_teacher_weber, v_sub_hsu, v_room_102, 'Di', 3, '09:55', '10:40', 'lesson'),
+    (v_class_1b, v_teacher_weber, v_sub_hsu, v_room_102, 'Di', 4, '10:45', '11:30', 'lesson'),
     -- Mittwoch
     (v_class_1b, v_teacher_weber, v_sub_deutsch, v_room_102, 'Mi', 1, '08:00', '08:45', 'lesson'),
     (v_class_1b, v_teacher_weber, v_sub_mathe, v_room_102, 'Mi', 2, '08:50', '09:35', 'lesson'),
     (v_class_1b, NULL, NULL, NULL, 'Mi', 0, '09:35', '09:55', 'break'),
-    (v_class_1b, v_teacher_fischer, v_sub_sport, v_room_turnhalle, 'Mi', 3, '09:55', '10:40', 'lesson'),
-    (v_class_1b, v_teacher_fischer, v_sub_sport, v_room_turnhalle, 'Mi', 4, '10:45', '11:30', 'lesson'),
+    (v_class_1b, v_teacher_weber, v_sub_sport, v_room_turnhalle, 'Mi', 3, '09:55', '10:40', 'lesson'),
+    (v_class_1b, v_teacher_weber, v_sub_sport, v_room_turnhalle, 'Mi', 4, '10:45', '11:30', 'lesson'),
     -- Donnerstag
     (v_class_1b, v_teacher_weber, v_sub_deutsch, v_room_102, 'Do', 1, '08:00', '08:45', 'lesson'),
     (v_class_1b, v_teacher_weber, v_sub_mathe, v_room_102, 'Do', 2, '08:50', '09:35', 'lesson'),
@@ -113,8 +113,8 @@ BEGIN
     (v_class_2b, v_teacher_weber, v_sub_mathe, v_room_104, 'Mi', 1, '08:00', '08:45', 'lesson'),
     (v_class_2b, v_teacher_braun, v_sub_deutsch, v_room_104, 'Mi', 2, '08:50', '09:35', 'lesson'),
     (v_class_2b, NULL, NULL, NULL, 'Mi', 0, '09:35', '09:55', 'break'),
-    (v_class_2b, v_teacher_fischer, v_sub_sport, v_room_turnhalle, 'Mi', 3, '09:55', '10:40', 'lesson'),
-    (v_class_2b, v_teacher_fischer, v_sub_sport, v_room_turnhalle, 'Mi', 4, '10:45', '11:30', 'lesson'),
+    (v_class_2b, v_teacher_braun, v_sub_sport, v_room_turnhalle, 'Mi', 3, '09:55', '10:40', 'lesson'),
+    (v_class_2b, v_teacher_braun, v_sub_sport, v_room_turnhalle, 'Mi', 4, '10:45', '11:30', 'lesson'),
     -- Donnerstag
     (v_class_2b, v_teacher_braun, v_sub_deutsch, v_room_104, 'Do', 1, '08:00', '08:45', 'lesson'),
     (v_class_2b, v_teacher_weber, v_sub_mathe, v_room_104, 'Do', 2, '08:50', '09:35', 'lesson'),
@@ -156,7 +156,7 @@ BEGIN
     (v_class_3a, v_teacher_schmidt, v_sub_mathe, v_room_105, 'Do', 1, '08:00', '08:45', 'lesson'),
     (v_class_3a, v_teacher_schmidt, v_sub_mathe, v_room_105, 'Do', 2, '08:50', '09:35', 'lesson'),
     (v_class_3a, NULL, NULL, NULL, 'Do', 0, '09:35', '09:55', 'break'),
-    (v_class_3a, v_teacher_schmidt, v_sub_englisch, v_room_105, 'Do', 3, '09:55', '10:40', 'lesson'),
+    (v_class_3a, v_teacher_weber, v_sub_englisch, v_room_105, 'Do', 3, '09:55', '10:40', 'lesson'),
     (v_class_3a, v_teacher_weber, v_sub_religion, v_room_105, 'Do', 4, '10:45', '11:30', 'lesson'),
     (v_class_3a, v_teacher_fischer, v_sub_hsu, v_room_105, 'Do', 5, '11:35', '12:20', 'lesson'),
     -- Freitag
