@@ -2,11 +2,26 @@
 
 Ein kinderfreundlicher, digitaler Vertretungsplan für Grundschulen.
 
-genaue Aufzeichungen und Beschreibung zum Projekt unter 
-   -> https://1drv.ms/o/c/e6ac48a3da56b972/IgAKDFkQRBeKSoejBImcJV-wAU5PoULeaOFgqXc0LstRbqA?e=YMVJEd
+> 📓 Genaue Projektbeschreibung und Dokumentation: [OneDrive](https://1drv.ms/o/c/e6ac48a3da56b972/IgAKDFkQRBeKSoejBImcJV-wAU5PoULeaOFgqXc0LstRbqA?e=YMVJEd)
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+[![🚀 Live Demo](https://img.shields.io/badge/🚀_Live_Demo-leo--kunstsk.riccardorohling.com-brightgreen?style=for-the-badge)](https://leo-kunstsk.riccardorohling.com/#/login)
+
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-316192?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-frontend-009639?logo=nginx&logoColor=white)
+
+## 🌐 Live Demo
+
+**➡️ [https://leo-kunstsk.riccardorohling.com/#/login](https://leo-kunstsk.riccardorohling.com/#/login)**
+
+Die Demo läuft auf einem echten Server (Cloudflare Tunnel + Docker). Login-Daten in [ANMELDEDATEN.md](ANMELDEDATEN.md).
+
+> ⚠️ **Hinweis:** Dies ist eine reine Demonstrationsversion mit fiktiven Testdaten. Alle Passwörter sind öffentlich bekannt – nicht für echten Schulbetrieb geeignet.
+
+---
 
 ## 📋 Übersicht
 
@@ -64,34 +79,63 @@ School Plan Kids ist eine moderne Web-Anwendung für Grundschulen, die Schülern
 
 3. **Container starten:**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 4. **Anwendung öffnen:**
-   - Frontend: http://localhost
+   - Frontend: http://localhost:2080
    - API: http://localhost:3001/api/health
 
 ### Standard-Admin-Login
 
 Nach dem ersten Start wird ein Admin-Benutzer erstellt:
 - **E-Mail:** admin@schule.de
-- **Passwort:** admin123 (bitte sofort ändern!)
+- **Passwort:** test1234
 
-## 🏗️ Architektur
+> Alle Test-Accounts (Lehrer, Schüler, Eltern) verwenden ebenfalls das Passwort `test1234`. Vollständige Liste in [ANMELDEDATEN.md](ANMELDEDATEN.md).
+
+## 🏗️ Systemarchitektur
+
+```mermaid
+graph TD
+    A[👤 Browser / Nutzer] -->|HTTPS| B[☁️ Cloudflare Tunnel]
+    B -->|HTTP intern| C[🌐 Nginx\nFrontend :2080]
+    C -->|REST API| D[⚙️ Express Backend\nNode.js :3001]
+    D -->|SQL| E[(🗄️ PostgreSQL\nDatenbank :5433)]
+    D -->|JWT Auth| F[🔐 Auth Middleware]
+
+    G[👨‍💻 Entwickler] -->|git push| H[📦 GitHub]
+    H -->|Actions Workflow| I[🤖 Self-hosted Runner]
+    I -->|docker compose up| C
+
+    style A fill:#4CAF50,color:#fff
+    style B fill:#F6821F,color:#fff
+    style C fill:#009639,color:#fff
+    style D fill:#68A063,color:#fff
+    style E fill:#316192,color:#fff
+    style H fill:#333,color:#fff
+    style I fill:#555,color:#fff
+```
+
+### 📁 Dateistruktur
 
 ```
 .
-├── .env
-├── .gitignore
+├── ANMELDEDATEN.md
+├── docker-compose.yml
+├── trigger_lehrer.py
+├── trigger_reset.py
 ├── backend/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── test-password.js
 │   ├── update-admin-password.js
 │   ├── database/
+│   │   ├── fix_teacher_conflicts.sql
 │   │   ├── init.sql
 │   │   ├── seed.sql
-│   │   └── seed2.sql
+│   │   ├── seed2.sql
+│   │   └── seed3.sql
 │   └── src/
 │       ├── server.js
 │       ├── config/
@@ -105,9 +149,8 @@ Nach dem ersten Start wird ein Admin-Benutzer erstellt:
 │           ├── news.js
 │           ├── sickNotes.js
 │           ├── timetable.js
+│           ├── trigger.js
 │           └── users.js
-├── docker-compose.yml
-├── fix-password.sql
 ├── frontend/
 │   ├── Dockerfile
 │   ├── index.html
@@ -119,7 +162,8 @@ Nach dem ersten Start wird ein Admin-Benutzer erstellt:
 │       ├── app.js
 │       ├── auth.js
 │       ├── components.js
-│       └── router.js
+│       ├── router.js
+│       └── trigger.js
 └── README.md
 ```
 
@@ -170,19 +214,29 @@ Die Anwendung funktioniert auf:
 ### Lokale Entwicklung
 
 ```bash
-# Backend (mit Hot-Reload)
-cd backend
-npm install
-npm run dev
+# Alle Container starten
+docker compose up -d
 
-# Frontend (statische Dateien)
-# Öffne frontend/index.html im Browser
-# Oder nutze einen lokalen Webserver
+# Logs anzeigen
+docker compose logs -f
+
+# Einzelnen Container neu starten
+docker compose restart backend
 ```
 
 ### Datenbank-Migration
 
-Das Schema wird automatisch beim ersten Start über `init.sql` erstellt.
+Das Schema wird automatisch beim ersten Start über `init.sql` erstellt, Testdaten über `seed.sql`, `seed2.sql` und `seed3.sql`.
+
+> ⚠️ **Wichtig:** Die Init-Skripte werden von PostgreSQL **nur einmal** ausgeführt, solange das Docker-Volume `postgres_data` existiert. Bei Änderungen an den SQL-Dateien muss das Volume neu erstellt werden:
+> ```bash
+> docker compose down -v   # Volume löschen (alle Daten gehen verloren)
+> docker compose up -d     # Neustart mit frischen Daten
+> ```
+> Alternativ können Änderungen direkt in die laufende DB eingespielt werden:
+> ```bash
+> docker exec -i schoolplan-db psql -U schoolplan_user -d schoolplan < backend/database/seed3.sql
+> ```
 
 ### API-Dokumentation
 

@@ -154,13 +154,11 @@ BEGIN
     (v_teacher_mueller, v_class_4a, 'HSU')
     ON CONFLICT DO NOTHING;
 
-    -- Herr Schmidt: 2a, 4a Mathe+Deutsch, 3b Mathe
+    -- Herr Schmidt: 2a, 4a Mathe+Deutsch, 3b Mathe durch Weber abgedeckt
     INSERT INTO teacher_classes (teacher_id, class_id, subject) VALUES
-    (v_teacher_schmidt, v_class_3b, 'Mathematik'),
+    (v_teacher_schmidt, v_class_3b, 'Mathematik'),    -- Backup, Weber hat Vorrang
     (v_teacher_schmidt, v_class_3a, 'Mathematik'),
-    (v_teacher_schmidt, v_class_3a, 'Deutsch'),
-    (v_teacher_schmidt, v_class_4b, 'Mathematik'),
-    (v_teacher_schmidt, v_class_4b, 'Deutsch')
+    (v_teacher_schmidt, v_class_3a, 'Deutsch')
     ON CONFLICT DO NOTHING;
 
     -- Frau Weber: 1b DE+MA, 2a-2b MA, Religion in 1b
@@ -195,7 +193,7 @@ BEGIN
     (v_teacher_braun, v_class_2b, 'Sport')
     ON CONFLICT DO NOTHING;
 
-    -- Frau Hofmann: Englisch, Religion, Werken 3./4. Klassen; Sport 4b (als Klassenlehrerin)
+    -- Frau Hofmann: 4b Klassenlehrerin (DE+MA+HSU+SP+EN+RE+WG); EN+RE 3b+4a
     INSERT INTO teacher_classes (teacher_id, class_id, subject) VALUES
     (v_teacher_hofmann, v_class_3b, 'Englisch'),
     (v_teacher_hofmann, v_class_3b, 'Religion'),
@@ -204,6 +202,9 @@ BEGIN
     -- 3a Englisch unterrichtet Weber (kein Konflikt mit Hofmann)
     (v_teacher_hofmann, v_class_4a, 'Religion'),
     (v_teacher_hofmann, v_class_4a, 'Englisch'),
+    (v_teacher_hofmann, v_class_4b, 'Deutsch'),
+    (v_teacher_hofmann, v_class_4b, 'Mathematik'),
+    (v_teacher_hofmann, v_class_4b, 'HSU'),
     (v_teacher_hofmann, v_class_4b, 'Englisch'),
     (v_teacher_hofmann, v_class_4b, 'Religion'),
     (v_teacher_hofmann, v_class_4b, 'Werken'),
@@ -215,6 +216,7 @@ BEGIN
     -- NEUER STUNDENPLAN KLASSE 3b
     -- (Alter Plan wird gelöscht und korrekt neu erstellt)
     -- Bayern Grundschule Klasse 3: DE:5 MA:5 HSU:3 SP:3 MU:2 KU:1 EN:2 RE:2 WG:1
+    -- MA: Weber (Mathe-Spezialistin), nicht Schmidt
     -- =====================================================
     DELETE FROM timetable_entries
     WHERE class_id = v_class_3b;
@@ -223,16 +225,15 @@ BEGIN
         (class_id, teacher_id, subject_id, room_id, weekday, lesson_number, start_time, end_time, entry_type)
     VALUES
     -- === MONTAG (5 Stunden) ===
-    -- Doppelstunde Mathe am Morgen: Kinder sind noch frisch
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,    v_room_106, 'Mo', 1, '08:00','08:45','lesson'),
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,    v_room_106, 'Mo', 2, '08:50','09:35','lesson'),
+    (v_class_3b, v_teacher_weber,   v_sub_mathe,    v_room_106, 'Mo', 1, '08:00','08:45','lesson'),
+    (v_class_3b, v_teacher_weber,   v_sub_mathe,    v_room_106, 'Mo', 2, '08:50','09:35','lesson'),
     (v_class_3b, NULL,              NULL,            NULL,       'Mo', 0, '09:35','09:55','break'),
     (v_class_3b, v_teacher_fischer, v_sub_sport,    v_room_turnhalle,'Mo', 3,'09:55','10:40','lesson'),
     (v_class_3b, v_teacher_braun,   v_sub_kunst,    v_room_106, 'Mo', 4, '10:45','11:30','lesson'),
     (v_class_3b, v_teacher_mueller, v_sub_deutsch,  v_room_106, 'Mo', 5, '11:35','12:20','lesson'),
 
     -- === DIENSTAG (5 Stunden) ===
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,    v_room_106, 'Di', 1, '08:00','08:45','lesson'),
+    (v_class_3b, v_teacher_weber,   v_sub_mathe,    v_room_106, 'Di', 1, '08:00','08:45','lesson'),
     (v_class_3b, v_teacher_mueller, v_sub_deutsch,  v_room_106, 'Di', 2, '08:50','09:35','lesson'),
     (v_class_3b, NULL,              NULL,            NULL,       'Di', 0, '09:35','09:55','break'),
     (v_class_3b, v_teacher_mueller, v_sub_hsu,      v_room_106, 'Di', 3, '09:55','10:40','lesson'),
@@ -247,7 +248,7 @@ BEGIN
     (v_class_3b, v_teacher_hofmann, v_sub_religion, v_room_106, 'Mi', 4, '10:45','11:30','lesson'),
 
     -- === DONNERSTAG (5 Stunden) ===
-    (v_class_3b, v_teacher_schmidt, v_sub_mathe,    v_room_106, 'Do', 1, '08:00','08:45','lesson'),
+    (v_class_3b, v_teacher_weber,   v_sub_mathe,    v_room_106, 'Do', 1, '08:00','08:45','lesson'),
     (v_class_3b, v_teacher_mueller, v_sub_deutsch,  v_room_106, 'Do', 2, '08:50','09:35','lesson'),
     (v_class_3b, NULL,              NULL,            NULL,       'Do', 0, '09:35','09:55','break'),
     (v_class_3b, v_teacher_fischer, v_sub_sport,    v_room_turnhalle,'Do', 3,'09:55','10:40','lesson'),
@@ -259,20 +260,19 @@ BEGIN
     (v_class_3b, v_teacher_fischer, v_sub_sport,    v_room_turnhalle,'Fr', 2,'08:50','09:35','lesson'),
     (v_class_3b, NULL,              NULL,            NULL,       'Fr', 0, '09:35','09:55','break'),
     (v_class_3b, v_teacher_braun,   v_sub_musik,    v_room_musikraum,'Fr', 3,'09:55','10:40','lesson'),
-    (v_class_3b, v_teacher_hofmann, v_sub_werken,   v_room_werkraum, 'Fr', 4,'10:45','11:30','lesson');
+    (v_class_3b, v_teacher_weber,   v_sub_mathe,    v_room_106, 'Fr', 4,'10:45','11:30','lesson');
 
     -- Deutsch: Mo(1) Di(1) Mi(1) Do(1) Fr(1) = 5 ✓
-    -- Mathe:   Mo(2) Di(1) Do(1)          = 4 ✓
-    -- HSU:     Di(1) Mi(1) Do(1)          = 3 ✓
-    -- Sport:   Mo(1) Do(1) Fr(1)          = 3 ✓
-    -- Musik:   Di(1) Fr(1)                = 2 ✓
-    -- Kunst:   Mo(1)                      = 1 ✓
-    -- Englisch:Di(1) Mi(1)                = 2 ✓
-    -- Religion:Mi(1) Do(1)                = 2 ✓
-    -- Werken:  Fr(1)                      = 1 ✓
+    -- Mathe:   Mo(2) Di(1) Do(1) Fr(1)       = 5 ✓
+    -- HSU:     Di(1) Mi(1) Do(1)             = 3 ✓
+    -- Sport:   Mo(1) Do(1) Fr(1)             = 3 ✓
+    -- Musik:   Di(1) Fr(1)                   = 2 ✓
+    -- Kunst:   Mo(1)                         = 1 ✓
+    -- Englisch:Di(1) Mi(1)                   = 2 ✓
+    -- Religion:Mi(1) Do(1)                   = 2 ✓
+    -- Werken:  → fehlt (ggf. als Nachmittagsangebot)
 
     -- =====================================================
-    -- STUNDENPLAN KLASSE 4b
     -- (Bayern Kl.4: DE:5 MA:5 HSU:3 SP:3 MU:2 KU:1 EN:2 RE:2 WG:2)
     -- =====================================================
     INSERT INTO timetable_entries
