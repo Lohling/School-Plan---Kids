@@ -570,6 +570,25 @@ input, select, textarea {
     border-color: #ffe0b2;
 }
 
+.github-link {
+    margin-top: var(--spacing-md);
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.github-link a {
+    color: #6e7681;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+}
+
+.github-link a:hover {
+    color: #24292f;
+}
+
 /* =====================================================
    MAIN CONTENT
    ===================================================== */

@@ -13,7 +13,7 @@
 
 | E-Mail | Passwort |
 |--------|----------|
-| admin@schule.de | test1234 |
+| admin@schule.de | SchoolPlan@2026!Secure |
 
 ---
 

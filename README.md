@@ -4,8 +4,6 @@ Ein kinderfreundlicher, digitaler Vertretungsplan für Grundschulen.
 
 > 📓 Genaue Projektbeschreibung und Dokumentation: [OneDrive](https://1drv.ms/o/c/e6ac48a3da56b972/IgAKDFkQRBeKSoejBImcJV-wAU5PoULeaOFgqXc0LstRbqA?e=YMVJEd)
 
-[![🚀 Live Demo](https://img.shields.io/badge/🚀_Live_Demo-leo--kunstsk.riccardorohling.com-brightgreen?style=for-the-badge)](https://leo-kunstsk.riccardorohling.com/#/login)
-
 ![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js&logoColor=white)
@@ -254,10 +252,6 @@ Die API-Endpunkte sind in den Route-Dateien dokumentiert:
 ## 🤝 Beitragen
 
 Beiträge sind willkommen! Bitte erstelle einen Pull Request.
-
-## 📄 Lizenz
-
-MIT License - siehe [LICENSE](LICENSE)
 
 ## 👨‍💻 Autor
 
