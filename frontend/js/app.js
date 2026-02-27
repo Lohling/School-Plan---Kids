@@ -519,13 +519,17 @@ const App = {
 
     async getStudentDashboard() {
         this.selectedClassId = null;
-        const [timetableRes, newsRes] = await Promise.all([
+        const today = this.getTodayWeekday();
+        const todayDate = this.getDateForWeekday(today);
+
+        const [timetableRes, newsRes, subsRes] = await Promise.all([
             API.timetable.getMy().catch(() => ({ timetable: {} })),
-            API.news.getAll(null, 1).catch(() => ({ news: [] }))
+            API.news.getAll(null, 1).catch(() => ({ news: [] })),
+            API.timetable.getSubstitutions(todayDate, null).catch(() => ({ substitutions: [] }))
         ]);
 
-        const today = this.getTodayWeekday();
-        const todayLessons = timetableRes.timetable[today] || [];
+        const baseEntries = timetableRes.timetable[today] || [];
+        const todayLessons = this.applySubstitutions(baseEntries, subsRes.substitutions || []);
 
         return `
             ${Components.card('Dein Stundenplan heute', `

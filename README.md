@@ -4,13 +4,6 @@ Ein kinderfreundlicher, digitaler Vertretungsplan für Grundschulen.
 
 > 📓 Genaue Projektbeschreibung und Dokumentation: [OneDrive](https://1drv.ms/o/c/e6ac48a3da56b972/IgAKDFkQRBeKSoejBImcJV-wAU5PoULeaOFgqXc0LstRbqA?e=YMVJEd)
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-316192?logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
-![Nginx](https://img.shields.io/badge/Nginx-frontend-009639?logo=nginx&logoColor=white)
-
 ## 🌐 Live Demo
 
 **➡️ [https://leo-kunstsk.riccardorohling.com/#/login](https://leo-kunstsk.riccardorohling.com/#/login)**
