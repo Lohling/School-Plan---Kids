@@ -17,6 +17,23 @@ jobs:
           mkdir -p /opt/docker/leonardo_kunst_seminarkurs
           rsync -av --delete --exclude '.git' --exclude '.env' --exclude 'actions-runner' ./ /opt/docker/leonardo_kunst_seminarkurs/
 
+      - name: Check if DB schema or seed data changed
+        id: db_check
+        run: |
+          cd /opt/docker/leonardo_kunst_seminarkurs
+          if git diff HEAD~1 --name-only 2>/dev/null | grep -q 'backend/database/'; then
+            echo "db_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "db_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reset DB volume (only when SQL files changed)
+        if: steps.db_check.outputs.db_changed == 'true'
+        run: |
+          cd /opt/docker/leonardo_kunst_seminarkurs
+          docker compose down -v
+          echo "DB volume removed — will be re-seeded on next start."
+
       - name: Build and start containers
         run: |
           cd /opt/docker/leonardo_kunst_seminarkurs
